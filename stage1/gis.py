@@ -25,6 +25,9 @@ from qgis.core import (
 
 from .catalogue import DESIGNS, SOURCES
 from .engine import aggregate, evaluate_combination, evaluate_design, groundwater, intervention_need, number, truth, validate_policy
+from .configuration import resolve_config
+from .runtime import RunControl
+from . import __version__
 
 gdal.UseExceptions()
 
@@ -87,14 +90,16 @@ def attrs(feature):
     return {f.name(): clean(feature[f.name()]) for f in feature.fields()}
 
 
-def load_vector(spec, target_crs, allow_empty=False):
+def load_vector(spec, target_crs, allow_empty=False, control=None):
     uri = str(spec["path"]) + ("|layername=" + spec["layer"] if spec.get("layer") else "")
     layer = QgsVectorLayer(uri, spec.get("layer", Path(spec["path"]).stem), "ogr")
     if not layer.isValid() or not layer.crs().isValid():
         raise ValueError(f"Unreadable vector or undefined CRS: {uri}")
     transform = QgsCoordinateTransform(layer.crs(), target_crs, QgsProject.instance())
     result = []
-    for f in layer.getFeatures():
+    for feature_index, f in enumerate(layer.getFeatures()):
+        if control and feature_index % 256 == 0:
+            control.check()
         geom = QgsGeometry(f.geometry())
         if geom.isEmpty() or not geom.isGeosValid():
             raise ValueError(f"Empty / invalid geometry in {uri}, feature {f.id()}; repair and review the source explicitly")
@@ -158,11 +163,16 @@ def join_evidence(geom, index, records, fields):
         cut = geom.intersection(other)
         if not cut.isEmpty() and cut.area() > 1e-8:
             intersections.append((cut, a))
-    result = {}
+    result, coverage_cache = {}, {}
     for dest, origin in fields.items():
-        usable = [(g, a.get(origin)) for g, a in intersections if a.get(origin) is not None]
+        mask = tuple(i for i, (_, a) in enumerate(intersections) if a.get(origin) is not None)
+        usable = [(intersections[i][0], intersections[i][1].get(origin)) for i in mask]
         values = [v for _, v in usable]
-        coverage = QgsGeometry.unaryUnion([g for g, _ in usable]).area() / geom.area() if usable else 0
+        # Many evidence attributes share exactly the same spatial coverage.
+        # Union it once per unique mask, without changing mixed/missing rules.
+        if mask not in coverage_cache:
+            coverage_cache[mask] = QgsGeometry.unaryUnion([g for g, _ in usable]).area() / geom.area() if usable else 0
+        coverage = coverage_cache[mask]
         if dest == "protection_zone" and any(str(v).upper() in ("I", "II") for v in values):
             result[dest] = "I" if "I" in values else "II"
         elif dest in ("receiving_ground_clean", "soil_infiltration_ok", "runoff_quality_ok") and any(truth(v) is False for v in values):
@@ -180,7 +190,7 @@ def join_evidence(geom, index, records, fields):
     return result
 
 
-def read_units(config, crs):
+def read_units(config, crs, control=None):
     flood = config["flood"]
     units = []
     factor = {"m": 1.0, "cm": .01}.get(flood.get("units"))
@@ -188,13 +198,15 @@ def read_units(config, crs):
         raise ValueError("Flood depth units must explicitly be m or cm")
     if not config.get("study_area"):
         raise ValueError("A documented study-area polygon is required")
-    aoi = QgsGeometry.unaryUnion([g for g, _ in load_vector(config["study_area"], crs)])
+    aoi = QgsGeometry.unaryUnion([g for g, _ in load_vector(config["study_area"], crs, control=control)])
+    prepared = QgsGeometry.createGeometryEngine(aoi.constGet())
+    prepared.prepareGeometry()
     if aoi.area() <= 0:
         raise ValueError("Study area must be polygonal")
     maximum = config.get("max_units", 250000)
     if flood["type"] == "vector":
         seen = set()
-        for geom, a in load_vector(flood, crs):
+        for geom, a in load_vector(flood, crs, control=control):
             if flood['depth_field'] not in a:
                 raise ValueError(f'Configured flood depth field is absent: {flood["depth_field"]}')
             if not geom.intersects(aoi):
@@ -212,6 +224,8 @@ def read_units(config, crs):
         # Input polygons are a partition, not overlapping candidate footprints.
         idx, rec = indexed([(u["geometry"], u["attrs"]) for u in units])
         for i, u in enumerate(units):
+            if control and i % 128 == 0:
+                control.check()
             for other in idx.intersects(u["geometry"].boundingBox()):
                 if other > i and u["geometry"].intersection(rec[other][0]).area() > 1e-6:
                     raise ValueError("Flood analysis polygons overlap; use a nonoverlapping analysis grid / partition")
@@ -239,11 +253,17 @@ def read_units(config, crs):
         band = ds.GetRasterBand(flood.get("band", 1))
         nodata = band.GetNoDataValue()
         for row in range(y0, y1):
+            if control:
+                control.check()
             values = band.ReadAsArray(x0, row, x1 - x0, 1)[0]
             for offset, v in enumerate(values):
                 col = x0 + offset
                 x, top = gt[0] + col * gt[1], gt[3] + row * gt[5]
-                geom = QgsGeometry.fromRect(QgsRectangle(x, top + gt[5], x + gt[1], top)).intersection(aoi)
+                geom = QgsGeometry.fromRect(QgsRectangle(x, top + gt[5], x + gt[1], top))
+                if not prepared.intersects(geom.constGet()):
+                    continue
+                if not prepared.contains(geom.constGet()):
+                    geom = geom.intersection(aoi)
                 if geom.area() <= 1e-8:
                     continue
                 value = number(v)
@@ -264,7 +284,7 @@ def read_units(config, crs):
     return units, aoi, grid
 
 
-def derived_evidence(config, units, grid, crs):
+def derived_evidence(config, units, grid, crs, control=None):
     """Read explicitly aligned covariate rasters and surveyed distance layers.
 
     No hidden interpolation. Numeric design base depths remain assumptions until
@@ -272,6 +292,8 @@ def derived_evidence(config, units, grid, crs):
     """
     reserved = {'unit_id', 'area_m2', 'flood_depth_m', 'grid_row', 'grid_col'}
     for spec in config.get('raster_evidence', []):
+        if control:
+            control.check()
         if grid['type'] != 'raster_cells':
             raise ValueError('Aligned raster evidence requires the raster-cell analysis mode; use polygon evidence joins for vector units')
         field = spec['field']
@@ -291,6 +313,8 @@ def derived_evidence(config, units, grid, crs):
         for u in units:
             by_row.setdefault(u['attrs']['grid_row'], []).append(u)
         for row, selected in by_row.items():
+            if control:
+                control.check()
             start = min(u['attrs']['grid_col'] for u in selected)
             end = max(u['attrs']['grid_col'] for u in selected)
             values = band.ReadAsArray(start, row, end-start+1, 1)[0]
@@ -309,15 +333,13 @@ def derived_evidence(config, units, grid, crs):
         field = spec['field']
         if field in reserved or not field.endswith('_distance_m'):
             raise ValueError('Distance evidence field must be an explicit *_distance_m field')
-        features = load_vector(spec, crs)
-        index = QgsSpatialIndex(flags=QgsSpatialIndex.FlagStoreFeatureGeometries)
-        for i, (geom, _) in enumerate(features):
-            f = QgsFeature(i)
-            f.setGeometry(geom)
-            index.addFeature(f)
-        for u in units:
-            nearest = index.nearestNeighbor(u['geometry'], 1)
-            distance = min(u['geometry'].distance(index.geometry(i)) for i in nearest)
+        features = load_vector(spec, crs, control=control)
+        from .muriel import SpatialLookup
+        lookup = SpatialLookup(features)
+        for unit_index, u in enumerate(units):
+            if control and unit_index % 128 == 0:
+                control.check()
+            distance = lookup.minimum(u['geometry'])
             # Incomplete inventories cannot establish absence of nearby assets.
             u['attrs'][field] = distance if spec.get('coverage_complete') is True else None
             u['attrs']['evidence_ref__' + field] = spec.get('evidence_ref') or 'MISSING_DISTANCE_SOURCE_REFERENCE'
@@ -338,9 +360,14 @@ def memory_layer(name, records, crs, polygon=True, geometry_type=None):
     # GIS output is a stable schema: numerical values stay numerical, long audit
     # strings stay strings. Boolean evidence is represented as integer 0/1.
     fields = []
+    numeric = {k: [False, True] for k in keys}
+    for a, _ in records:
+        for k, value in a.items():
+            if value is not None:
+                numeric[k][0] = True
+                numeric[k][1] &= isinstance(value, (int, float))
     for k in keys:
-        nonempty = [a[k] for a, _ in records if a.get(k) is not None]
-        is_numeric = bool(nonempty) and all(isinstance(v, (int, float)) for v in nonempty)
+        is_numeric = all(numeric[k])
         fields.append(QgsField(k, QVariant.Double if is_numeric else QVariant.String))
     provider.addAttributes(fields)
     layer.updateFields()
@@ -388,7 +415,7 @@ def add_attribute_table(db, name, records):
     keys = list(records[0])
     db.execute(f'CREATE TABLE "{name}" (row_id INTEGER PRIMARY KEY, ' + ', '.join(f'"{k}" TEXT' for k in keys) + ')')
     db.executemany(f'INSERT INTO "{name}" (' + ','.join(f'"{k}"' for k in keys) + ') VALUES (' + ','.join('?' for _ in keys) + ')',
-                   [[str(r[k]) if r[k] is not None else None for k in keys] for r in records])
+                   ([str(r[k]) if r[k] is not None else None for k in keys] for r in records))
     db.execute("INSERT INTO gpkg_contents(table_name,data_type,identifier,description,last_change) VALUES (?, 'attributes', ?, ?, ?)",
                (name, name, "Stage 1 audit register", datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%fZ')))
     # Complete the GDAL-maintained counts extension too. Otherwise opening the
@@ -401,10 +428,20 @@ def add_attribute_table(db, name, records):
 
 def csv_write(path, rows):
     if rows:
+        from operator import itemgetter
+        # DictWriter rechecks unknown columns for every row. Build the complete
+        # ordered schema once, then use a C-level getter for uniform registers.
+        schema = {}
+        for row in rows:
+            schema.update(row)
+        keys = list(schema)
         with Path(path).open('w', newline='', encoding='utf-8') as f:
-            w = csv.DictWriter(f, fieldnames=list(dict.fromkeys(k for r in rows for k in r)))
-            w.writeheader()
-            w.writerows(rows)
+            writer = csv.writer(f)
+            writer.writerow(keys)
+            if len(keys) > 1 and all(len(row) == len(keys) for row in rows):
+                writer.writerows(map(itemgetter(*keys), rows))
+            else:
+                writer.writerows([row.get(k) for k in keys] for row in rows)
 
 
 def styled_layer(gpkg, table, name, field="status", subset=None):
@@ -525,37 +562,38 @@ def make_layout(project, layer, title, config, notes, extent, number_, context_l
     return layout
 
 
-def resolve_config(path):
-    path = Path(path).resolve()
-    config = json.loads(path.read_text())
-    config['policy'] = validate_policy(config.get('policy', {}))
-    if not config.get('scenario_id') or config['scenario_id'] in ('UNKNOWN', 'REQUIRED'):
-        raise ValueError("Register a flood scenario_id; an SRI label does not automatically imply a return period")
-    if not config.get('groundwater_scenario_id'):
-        raise ValueError("Register a groundwater_scenario_id (it can be explicitly unknown, keeping gates conditional)")
-    if not config.get('run_id') or not config.get('area_label'):
-        raise ValueError("run_id and area_label are required")
-    intervention_need(0, config['flood_threshold_m'])
-    config['designs'] = config.get('designs', list(DESIGNS))
-    if not config['designs'] or any(d not in DESIGNS for d in config['designs']):
-        raise ValueError("designs must be a nonempty list of catalogue design IDs")
-    for key in ('flood', 'study_area', 'ownership'):
-        if config.get(key) and config[key].get('path'):
-            config[key]['path'] = str((path.parent / config[key]['path']).resolve())
-    for spec in config.get('evidence', []) + config.get('raster_evidence', []) + config.get('distance_evidence', []):
-        spec['path'] = str((path.parent / spec['path']).resolve())
-    muriel = config.get('muriel') or {}
-    for spec in muriel.get('receptors', []) + [muriel[k] for k in ('municipal_land', 'roads', 'usable_space', 'routes') if muriel.get(k)]:
-        spec['path'] = str((path.parent / spec['path']).resolve())
-    config['output_dir'] = str((path.parent / config['output_dir']).resolve())
-    return config
-
-
-def run(config_path, export_maps=True):
+def run(config_path, export_maps=True, progress=None, cancelled=None):
+    """Publish results atomically; failures/cancellation never leave a final run."""
+    import shutil
+    import tempfile
     config = resolve_config(config_path)
     out = Path(config['output_dir'])
     if out.exists():
-        raise ValueError(f"Output directory already exists: {out}. Use a new run_id/output path to preserve earlier runs.")
+        raise ValueError(f'Output directory already exists: {out}. Use a new run_id/output path to preserve earlier runs.')
+    control = RunControl(progress, cancelled)
+    control.update(0, 'Checking configuration')
+    out.parent.mkdir(parents=True, exist_ok=True)
+    staging = Path(tempfile.mkdtemp(prefix='.' + out.name + '_running_', dir=out.parent))
+    try:
+        _run(config_path, export_maps, control, staging)
+        control.check()
+        timings = control.finish()
+        (staging / 'performance.json').write_text(json.dumps(timings, indent=2))
+        manifest_path = staging / 'run_manifest.json'
+        manifest = json.loads(manifest_path.read_text())
+        manifest['performance'] = timings
+        manifest_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False))
+        if out.exists():
+            raise ValueError(f'Output directory already exists: {out}; another run may have completed there.')
+        staging.rename(out)
+    except BaseException:
+        shutil.rmtree(staging, ignore_errors=True)
+        raise
+    return out
+
+
+def _run(config_path, export_maps, control, out):
+    config = resolve_config(config_path)
     crs = QgsCoordinateReferenceSystem(config.get('crs', 'EPSG:25832'))
     if not crs.isValid() or crs.isGeographic() or crs.mapUnits() != Qgis.DistanceUnit.Meters:
         raise ValueError("Use a valid projected CRS in metres")
@@ -563,10 +601,13 @@ def run(config_path, export_maps=True):
     # project from being cleared when the workflow runs through Processing.
     project = QgsProject()
     project.setCrs(crs)
-    units, aoi, grid = read_units(config, crs)
+    control.phase(3, 'Reading flood depths and study boundary')
+    units, aoi, grid = read_units(config, crs, control)
+    control.phase(15, f'Joining evidence for {len(units):,} analysis units')
     config['analysis_grid_description'] = (' × '.join(f'{v:g}' for v in grid['pixel_size_m']) + ' m; source grid retained') if grid['type'] == 'raster_cells' else 'Input polygon partition; source resolution applies'
     for spec in config.get('evidence', []):
-        features = load_vector(spec, crs)
+        control.check()
+        features = load_vector(spec, crs, control=control)
         fields = spec.get('fields') or {key: key for key in features[0][1] if key != spec.get('id_field', 'unit_id')}
         if set(fields) & {'unit_id', 'area_m2', 'flood_depth_m'}:
             raise ValueError('Evidence overlays may not overwrite analysis IDs, measured area or flood depth')
@@ -577,20 +618,26 @@ def run(config_path, export_maps=True):
                 if uid in records:
                     raise ValueError(f"Duplicate evidence unit ID {uid}")
                 records[uid] = a
-            for u in units:
+            for unit_index, u in enumerate(units):
+                if unit_index % 128 == 0:
+                    control.check()
                 a = records.get(u['attrs']['unit_id'], {})
                 u['attrs'].update({target: a.get(origin) for target, origin in fields.items()})
         elif spec['join'] == 'spatial':
             idx, records = indexed(features)
-            for u in units:
+            for unit_index, u in enumerate(units):
+                if unit_index % 128 == 0:
+                    control.check()
                 u['attrs'].update(join_evidence(u['geometry'], idx, records, fields))
         else:
             raise ValueError("Evidence join must be id or spatial")
-    derived_evidence(config, units, grid, crs)
+    derived_evidence(config, units, grid, crs, control=control)
     if config.get('ownership'):
         spec = config['ownership']
-        idx, records = indexed(load_vector(spec, crs))
-        for u in units:
+        idx, records = indexed(load_vector(spec, crs, control=control))
+        for unit_index, u in enumerate(units):
+            if unit_index % 128 == 0:
+                control.check()
             u['attrs'].update(ownership(u['geometry'], idx, records, spec.get('class_field', 'owner_class'), spec['mapping']))
     else:
         for u in units:
@@ -598,8 +645,12 @@ def run(config_path, export_maps=True):
 
     # Compute all checks before writing results; input and reference errors do not
     # leave a misleading completed output directory.
+    control.phase(28, 'Evaluating groundwater and NbS rules')
     evaluations, audit, nbs, gw_records, need_records, owner_records = {}, [], [], [], [], []
-    for u in units:
+    combo_members = {(str(m.get('unit_id')), m.get('design')) for c in config.get('combinations', []) for m in c.get('modules', [])}
+    for unit_index, u in enumerate(units):
+        if unit_index % 128 == 0:
+            control.update(28 + 22 * unit_index / len(units), f'Evaluating unit {unit_index + 1:,} of {len(units):,}')
         a, geom = u['attrs'], u['geometry']
         uid = a['unit_id']
         base = {k: a.get(k) for k in ('unit_id', 'flood_depth_m', 'area_m2', 'owner_class', 'municipal_fraction', 'private_fraction', 'other_public_fraction', 'unknown_fraction', 'ownership_overlap_m2')}
@@ -613,7 +664,8 @@ def run(config_path, export_maps=True):
             audit.append({'unit_id': uid, 'design': 'PRELIMINARY_GROUNDWATER', 'scenario_id': config['scenario_id'], **d.record()})
         for design in config['designs']:
             rows = evaluate_design(a, design, config['policy'], config.get('vertical_datum'), config['groundwater_scenario_id'])
-            evaluations[(uid, design)] = rows
+            if (uid, design) in combo_members:
+                evaluations[(uid, design)] = rows
             nbs.append(({**base, 'design': design, 'design_label': DESIGNS[design][0], 'family': DESIGNS[design][1], 'pathway': 'infiltration' if DESIGNS[design][2] else 'no_deliberate_infiltration', 'need_local': need, **summary(rows)}, geom))
             for d in rows:
                 audit.append({'unit_id': uid, 'design': design, 'scenario_id': config['scenario_id'], **d.record()})
@@ -636,12 +688,13 @@ def run(config_path, export_maps=True):
         for d in rows:
             audit.append({'unit_id': combo['id'], 'design': 'COMBINATION', 'scenario_id': config['scenario_id'], **d.record()})
 
+    control.phase(50, 'Screening MURIEL public-space opportunities')
     muriel = None
     if (config.get('muriel') or {}).get('enabled') is True:
         from .muriel import screen
-        muriel = screen(units, aoi, crs, config, gw_records)
+        muriel = screen(units, aoi, crs, config, gw_records, control=control)
         audit.extend(muriel['audit'])
-    out.mkdir(parents=True)
+    control.phase(60, 'Writing GeoPackage and decision registers')
     # Build under a staging filename so the complete analytical schema exists
     # before any consumer opens the final deliverable.
     gpkg = out / '_stage1_build.gpkg'
@@ -653,6 +706,7 @@ def run(config_path, export_maps=True):
             if muriel[key]:
                 layers.append((name, muriel[key]))
     for i, (name, records) in enumerate(layers):
+        control.check()
         write_layer(gpkg, memory_layer(name, records, crs, geometry_type='MultiLineString' if name == 'muriel_connections' else None), name, first=i == 0)
     provenance = []
     specs = [('flood', config['flood']), ('study_area', config['study_area'])] + [(key, s) for key in ('evidence', 'raster_evidence', 'distance_evidence') for s in config.get(key, [])]
@@ -660,8 +714,12 @@ def run(config_path, export_maps=True):
         specs.append(('ownership', config['ownership']))
     if muriel:
         specs.extend(muriel['sources'])
+    hashes = {}
     for role, spec in specs:
-        provenance.append({'role': role, 'path': spec['path'], 'layer': spec.get('layer'), 'sha256': checksum(spec['path']),
+        control.check()
+        if spec['path'] not in hashes:
+            hashes[spec['path']] = checksum(spec['path'])
+        provenance.append({'role': role, 'path': spec['path'], 'layer': spec.get('layer'), 'sha256': hashes[spec['path']],
                            'metadata': json.dumps(spec.get('metadata', {}), ensure_ascii=False)})
     with sqlite3.connect(gpkg) as db:
         add_attribute_table(db, 'decision_audit', audit)
@@ -681,7 +739,7 @@ def run(config_path, export_maps=True):
         for key in ('priority', 'destinations', 'connections'):
             csv_write(out / f'muriel_{key}.csv', [a for a, _ in muriel[key]])
         (out / 'muriel_summary.json').write_text(json.dumps(muriel['summary'], indent=2))
-    manifest = {'software': {'qgis': Qgis.QGIS_VERSION, 'gdal': gdal.VersionInfo(), 'workflow': '0.2.0'},
+    manifest = {'software': {'qgis': Qgis.QGIS_VERSION, 'gdal': gdal.VersionInfo(), 'workflow': __version__},
                 'created_at_utc': datetime.now(timezone.utc).isoformat(), 'run_id': config['run_id'],
                 'demo': config.get('demo', False), 'unit_count': len(units), 'grid': grid, 'inputs': provenance,
                 'config_sha256': checksum(config_path),
@@ -728,11 +786,13 @@ def run(config_path, export_maps=True):
             if any(name == table for name, _ in layers):
                 maps.append((table, title, None, notes + ('\n\nDashed lines show proximity or\nincomplete evidence; no flow proof.' if table == 'muriel_connections' else '')))
 
+    control.phase(72, 'Building QGIS project and map sheets')
     pages, exported, map_layers = [], [], []
     for table, title, design, notes in maps:
         # Overlapping portfolios must never conceal one another on one map.
         combo_subsets = [a['combination_id'] for a, _ in combos] if table == 'combinations' else [None]
         for combo_id in combo_subsets:
+            control.update(72 + 12 * len(map_layers) / (len(maps) + len(combos)), 'Preparing map: ' + title)
             subset = f'"design" = \'{design}\'' if design else None
             if combo_id:
                 subset = '"combination_id" = \'' + combo_id.replace("'", "''") + "'"
@@ -786,6 +846,7 @@ def run(config_path, export_maps=True):
         import subprocess, shutil
         pdfs = []
         for i, layout in enumerate(pages):
+            control.update(85 + 12 * i / len(pages), f'Exporting PDF sheet {i+1} of {len(pages)}')
             target = out / f'_sheet_{i+1:02d}.pdf'
             settings = QgsLayoutExporter.PdfExportSettings()
             settings.dpi = 180
@@ -799,47 +860,11 @@ def run(config_path, export_maps=True):
                 subprocess.run(['pdfunite', *map(str, muriel_pdfs), str(out / 'muriel_atlas.pdf')], check=True)
             for p in pdfs:
                 p.unlink()
-    create_report(out, config, layers, manifest, exported)
+    control.phase(98, 'Preparing results dashboard')
+    create_report(out, config, layers, manifest, exported, audit=audit)
     return out
 
 
-def create_report(out, config, layers, manifest, exported):
-    counts = {}
-    for name, records in layers:
-        if name == 'nbs_opportunities':
-            for design in config['designs']:
-                selected = [a for a, _ in records if a['design'] == design]
-                counts[design] = {s: sum(a['status'] == s for a in selected) for s in ('ADMISSIBLE', 'CONDITIONAL', 'FAIL')}
-        else:
-            field = 'planning_class' if name == 'muriel_priority' else 'hotspot_class' if name == 'muriel_hotspots' else 'context_type' if name == 'muriel_context' else 'status'
-            counts[name] = {s: sum(a[field] == s for a, _ in records) for s in sorted({a[field] for a, _ in records})}
-    (out / 'summary.json').write_text(json.dumps(counts, indent=2))
-    banner = 'SYNTHETIC DEMONSTRATION — NOT KÖLN-KALK RESULTS' if config.get('demo') else 'SPATIAL SCREENING — NOT CONSTRUCTION APPROVAL'
-    figures = ''.join(f'<figure><a href="{html.escape(file)}"><img src="{html.escape(file)}" alt="{html.escape(name)}"></a><figcaption>{html.escape(name)}</figcaption></figure>' for name, file in exported)
-    rows = ''.join(f'<tr><td>{html.escape(k)}</td><td>{html.escape(json.dumps(v))}</td></tr>' for k, v in counts.items())
-    limitations = ''.join('<li>' + html.escape(s) + '</li>' for s in manifest['limitations'])
-    pdf_links = '<a href="stage1_atlas.pdf">PDF atlas</a>' if (out / 'stage1_atlas.pdf').exists() else ' '.join(f'<a href="{p.name}">PDF sheet {i+1}</a>' for i, p in enumerate(sorted(out.glob('_sheet_*.pdf'))))
-    if not pdf_links:
-        pdf_links = 'Map-file export was disabled for this run'
-    if (out / 'muriel_atlas.pdf').exists():
-        pdf_links += ' · <a href="muriel_atlas.pdf">MURIEL atlas</a>'
-    muriel_report = ''
-    if manifest.get('muriel', {}).get('enabled'):
-        m = manifest['muriel']
-        if (out / 'muriel_priority.csv').exists():
-            pdf_links += ' · <a href="muriel_priority.csv">MURIEL decision register</a>'
-        muriel_report = (f'<h2>MURIEL planning screen</h2><p>Observed footprints: {m["footprint_count"]}; '
-                         f'eligible destinations: {m["destination_count"]}; unknown source units: {m["unknown_source_unit_count"]}. '
-                         f'Footprint mode: <code>{html.escape(m["thresholds"]["footprint_mode"])}</code>. '
-                         '<a href="muriel_summary.json">Registered criteria and counts</a>. '
-                         'Zero observed hotspots with missing source data does not establish absence of hazard.</p>')
-    doc = f'''<!doctype html><html lang="en"><meta charset="utf-8"><title>Stage 1 NbS opportunity atlas</title>
-<style>body{{font:16px/1.55 system-ui;max-width:1180px;margin:30px auto;padding:0 24px;color:#243e4a;background:#f6f8fa}}h1{{font-size:36px}}.banner{{background:#ffe3d9;padding:16px;font-weight:700}}.maps{{display:grid;grid-template-columns:repeat(auto-fit,minmax(450px,1fr));gap:24px}}figure{{margin:0;background:white;padding:10px}}img{{width:100%}}table{{border-collapse:collapse;width:100%}}td,th{{text-align:left;border-bottom:1px solid #ccd5dc;padding:9px}}code{{background:#e9edf0}}a{{color:#116963}}</style>
-<p class="banner">{banner}</p><h1>Stage 1 · NbS opportunity atlas</h1><p>{html.escape(config['area_label'])} / {html.escape(config['scenario_id'])}</p>
-<p>Open <a href="stage1.qgz">stage1.qgz</a> in QGIS. Select an NbS layer and use <b>Identify Features</b> to inspect <code>explanation</code>, rule IDs, evidence and source links. The <code>decision_audit</code> table holds one row per rule.</p>
-<p>{pdf_links} · <a href="candidate_register.csv">Candidate register</a> · <a href="decision_audit.csv">Decision audit</a> · <a href="source_registry.csv">Sources</a> · <a href="run_manifest.json">Provenance manifest</a></p>
-<h2>Interpretation and outstanding evidence</h2><ul>{limitations}</ul>
-{muriel_report}
-<h2>Class counts</h2><p>Counts are analysis units per design, not independent sites or delivered projects. Geometry and effect need separate assessment.</p><table><tr><th>Layer / design</th><th>Counts</th></tr>{rows}</table>
-<h2>Map sheets</h2><div class="maps">{figures}</div></html>'''
-    (out / 'report.html').write_text(doc, encoding='utf-8')
+def create_report(out, config, layers, manifest, exported, audit=None):
+    from .report import create_report as write_report
+    write_report(out, config, layers, manifest, exported, audit or [])

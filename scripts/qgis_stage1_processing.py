@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 from qgis.core import (
     QgsProcessingAlgorithm, QgsProcessingOutputFile, QgsProcessingOutputHtml,
-    QgsProcessingParameterBoolean, QgsProcessingParameterFile,
+    QgsProcessingParameterBoolean, QgsProcessingParameterFile, QgsProcessingException,
 )
 
 
@@ -49,8 +49,21 @@ class NbsOpportunityStageOne(QgsProcessingAlgorithm):
         sys.path.insert(0, str(root))
         try:
             from stage1.gis import run
+            from stage1.preflight import inspect_config
+            from stage1.runtime import RunCancelled
+            checked = inspect_config(self.parameterAsFile(parameters, 'CONFIG', context))
+            for issue in checked.issues:
+                feedback.pushInfo(f"{issue['level']}: {issue['input']} - {issue['message']} {issue['action']}")
+            if not checked.ok:
+                raise QgsProcessingException(checked.text())
             feedback.pushInfo('Evaluating spatial evidence and rule gates; no hydraulic performance is inferred.')
-            output = run(self.parameterAsFile(parameters, 'CONFIG', context), self.parameterAsBool(parameters, 'EXPORT_MAPS', context))
+            def progress(percent, message):
+                feedback.setProgress(percent)
+                feedback.setProgressText(message)
+            try:
+                output = run(self.parameterAsFile(parameters, 'CONFIG', context), self.parameterAsBool(parameters, 'EXPORT_MAPS', context), progress=progress, cancelled=feedback.isCanceled)
+            except RunCancelled as exc:
+                raise QgsProcessingException(str(exc)) from exc
             return {'PROJECT': str(output / 'stage1.qgz'), 'REPORT': str(output / 'report.html')}
         finally:
             sys.path.remove(str(root))

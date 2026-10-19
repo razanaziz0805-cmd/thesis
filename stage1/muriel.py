@@ -56,11 +56,11 @@ def flood_hotspots(units, aoi, settings=None):
     return results
 
 
-def _inventory(spec, crs, geometry_type=QgsWkbTypes.PolygonGeometry):
+def _inventory(spec, crs, geometry_type=QgsWkbTypes.PolygonGeometry, control=None):
     from .gis import load_vector
     if not spec:
         return [], False
-    items = load_vector(spec, crs, allow_empty=True)
+    items = load_vector(spec, crs, allow_empty=True, control=control)
     if any(g.type() != geometry_type for g, _ in items):
         raise ValueError(f'MURIEL input has wrong geometry type: {spec["path"]} / {spec.get("layer")}')
     return items, spec.get('coverage_complete') is True
@@ -68,6 +68,35 @@ def _inventory(spec, crs, geometry_type=QgsWkbTypes.PolygonGeometry):
 
 def _minimum(geom, records):
     return min((geom.distance(g) for g, _ in records), default=None)
+
+
+class SpatialLookup:
+    """Exact polygon distances with an R-tree; bounding boxes are only filters."""
+    def __init__(self, records):
+        self.records = records
+        self.index = QgsSpatialIndex(flags=QgsSpatialIndex.FlagStoreFeatureGeometries)
+        for i, (geom, _) in enumerate(records):
+            f = QgsFeature(i)
+            f.setGeometry(geom)
+            self.index.addFeature(f)
+
+    def minimum(self, geom):
+        ids = self.index.nearestNeighbor(geom, 1)
+        if not ids:
+            return None
+        # Provider/QGIS versions can rank polygon nearest neighbours by a box
+        # lower bound (notably with holes). Any initial candidate gives a safe
+        # upper bound; search every box within that bound and measure geometry.
+        upper = min(geom.distance(self.records[i][0]) for i in ids)
+        extent = geom.boundingBox()
+        extent.grow(upper + 1e-8)
+        return min(geom.distance(self.records[i][0]) for i in self.index.intersects(extent))
+
+    def within(self, geom, radius):
+        extent = geom.boundingBox()
+        extent.grow(radius)
+        return [self.records[i][1] for i in sorted(self.index.intersects(extent))
+                if geom.distance(self.records[i][0]) <= radius]
 
 
 def _reference(spec):
@@ -115,7 +144,7 @@ def _route_checks(hotspot, destination, routes, spec):
     return rows_out
 
 
-def screen(units, aoi, crs, config, groundwater_records):
+def screen(units, aoi, crs, config, groundwater_records, control=None):
     """Return spatial layers and audit rows to the existing Stage 1 pipeline."""
     from .gis import summary
     spec = config['muriel']
@@ -124,9 +153,9 @@ def screen(units, aoi, crs, config, groundwater_records):
     source_specs = [(f'muriel_receptors_{i+1}', s) for i, s in enumerate(spec.get('receptors', []))]
     receptor_items, receptor_complete = [], bool(spec.get('receptors'))
     for _, source in source_specs:
-        items, complete = _inventory(source, crs)
+        items, complete = _inventory(source, crs, control=control)
         receptor_items.extend(items); receptor_complete &= complete
-    land, land_complete = _inventory(spec.get('municipal_land'), crs)
+    land, land_complete = _inventory(spec.get('municipal_land'), crs, control=control)
     land_source = spec.get('municipal_land') or {}
     if land_source.get('class_field'):
         values = land_source.get('municipal_values')
@@ -144,14 +173,14 @@ def screen(units, aoi, crs, config, groundwater_records):
             selected = [(g.difference(others), a) for g, a in selected if g.difference(others).area() > 1e-8]
         land = selected
     land_verified = (spec.get('municipal_land') or {}).get('municipal_verified') is True
-    roads, roads_complete = _inventory(spec.get('roads'), crs)
+    roads, roads_complete = _inventory(spec.get('roads'), crs, control=control)
     public = union(g for g, _ in land) if land_verified else QgsGeometry()
     public_nonroad = public.difference(union(g for g, _ in roads)) if roads and not public.isEmpty() else public
     # Positive evidence requires the road inventory too: unknown roads cannot
     # establish that a specific municipal polygon is non-road.
     nonroad_known = land_verified and roads_complete
     public_records = [(g, {}) for g in polygon_parts(public_nonroad)] if nonroad_known else []
-    usable, usable_complete = _inventory(spec.get('usable_space'), crs)
+    usable, usable_complete = _inventory(spec.get('usable_space'), crs, control=control)
     usable_source = spec.get('usable_space') or {}
     id_field, usable_field = usable_source.get('id_field', 'destination_id'), usable_source.get('usable_field', 'usable')
     ids, destinations, unknown_usability = set(), [], False
@@ -173,7 +202,13 @@ def screen(units, aoi, crs, config, groundwater_records):
     municipal_complete = land_complete and land_verified and roads_complete
     destination_complete = usable_complete and municipal_complete and not unknown_usability
     eligible_union = union(d['geometry'] for d in destinations)
-    route_items, _ = _inventory(spec.get('routes'), crs, QgsWkbTypes.LineGeometry)
+    route_items, _ = _inventory(spec.get('routes'), crs, QgsWkbTypes.LineGeometry, control=control)
+    routes_by_pair = {}
+    for geom, a in route_items:
+        routes_by_pair.setdefault((str(a.get('hotspot_id')), str(a.get('destination_id'))), []).append((geom, a))
+    receptor_lookup = SpatialLookup(receptor_items)
+    public_lookup = SpatialLookup(public_records)
+    destination_lookup = SpatialLookup([(d['geometry'], d) for d in destinations])
     valid_hotspots, valid_destinations = {h['hotspot_id'] for h in hotspots}, {d['destination_id'] for d in destinations}
     ineligible_routes = []
     hotspot_map = {h['hotspot_id']: h for h in hotspots}
@@ -204,7 +239,9 @@ def screen(units, aoi, crs, config, groundwater_records):
         audit.append({'unit_id':ident,'design':'MURIEL_ROUTE','scenario_id':config['scenario_id'],**d.record()})
     source_mask = []
     cutoff = p['min_max_depth_m'] if p['footprint_mode'] == 'depth_mask' else p['flood_extent_depth_m']
-    for unit in units:
+    for unit_index, unit in enumerate(units):
+        if control and unit_index % 128 == 0:
+            control.check()
         a = unit['attrs']; depth = number(a.get('flood_depth_m'))
         included = depth is not None and depth > cutoff
         d = Decision('MURIEL_SOURCE_MASK', 'CONDITIONAL' if depth is None else 'ADMISSIBLE' if included else 'NOT_APPLICABLE',
@@ -216,19 +253,21 @@ def screen(units, aoi, crs, config, groundwater_records):
                              'threshold_m':cutoff,'footprint_mode':p['footprint_mode'],'scenario_id':config['scenario_id'],'is_demo':int(config.get('demo',False)),**summary([d])},unit['geometry']))
         audit.append({'unit_id':a['unit_id'],'design':'MURIEL_SOURCE_MASK','scenario_id':config['scenario_id'],**d.record()})
     for h in hotspots:
+        if control:
+            control.check()
         geom = h['geometry']
-        near = [d for d in destinations if geom.distance(d['geometry']) <= p['destination_distance_m']]
+        near = destination_lookup.within(geom, p['destination_distance_m'])
         links = []
         for d in near:
-            links.extend(_route_checks(h, d, route_items, spec.get('routes')))
+            links.extend(_route_checks(h, d, routes_by_pair.get((h['hotspot_id'], d['destination_id']), []), spec.get('routes')))
         states = [row[0]['status'] for row in links]
         best_route = 'ADMISSIBLE' if 'ADMISSIBLE' in states else 'CONDITIONAL' if not states or 'CONDITIONAL' in states else 'FAIL'
         groundwater_states = [gw_map.get(uid, 'CONDITIONAL') for uid in h['source_unit_ids']]
         gw_state = 'FAIL' if 'FAIL' in groundwater_states else 'CONDITIONAL' if 'CONDITIONAL' in groundwater_states else 'ADMISSIBLE'
         metrics = {k: v for k, v in h.items() if k != 'geometry'}
-        metrics.update(receptor_distance_m=_minimum(geom, receptor_items), receptor_coverage_complete=receptor_complete,
-                       municipal_distance_m=_minimum(geom, public_records), municipal_coverage_complete=municipal_complete,
-                       destination_distance_m=min((geom.distance(d['geometry']) for d in destinations), default=None),
+        metrics.update(receptor_distance_m=receptor_lookup.minimum(geom), receptor_coverage_complete=receptor_complete,
+                       municipal_distance_m=public_lookup.minimum(geom), municipal_coverage_complete=municipal_complete,
+                       destination_distance_m=destination_lookup.minimum(geom),
                        destination_coverage_complete=destination_complete,
                        overlap_fraction=geom.intersection(eligible_union).area()/geom.area() if not eligible_union.isEmpty() else 0.,
                        overlap_coverage_complete=destination_complete, best_route_status=best_route,

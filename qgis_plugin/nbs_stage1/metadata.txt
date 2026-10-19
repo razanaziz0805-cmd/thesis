@@ -1,0 +1,11 @@
+[general]
+name=NbS Stage 1 Opportunity Mapping
+qgisMinimumVersion=3.40
+description=Guided flood, groundwater, NbS and MURIEL opportunity mapping with reasons and references.
+version=0.3.0
+author=Thesis workflow project
+email=
+about=Select GIS layers, check inputs and produce an auditable QGIS project. Screening only. Missing evidence remains conditional.
+category=Analysis
+experimental=True
+repository=https://github.com/razanaziz0805-cmd/thesis

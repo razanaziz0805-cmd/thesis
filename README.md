@@ -2,9 +2,15 @@
 
 This repository implements the **first stage** of the thesis workflow: configurable flood-need maps, a preliminary infiltration-pathway map, **MURIEL public-space screening**, per-design opportunity maps, declared combination checks and ownership analysis. It produces a portable QGIS project, a GeoPackage with feature-level explanations, audit tables, CSV registers, PNG sheets and PDF atlases.
 
-**Current status (v0.2):** implemented and tested on synthetic inputs. No actual Köln-Kalk GIS layers have been supplied. The example atlas is a software demonstration, not a thesis finding. The thesis was read as research material. Schwerdorf's original MURIEL presentation was retrieved and slides 19–20 checked; other technical/regulatory references still require primary-source verification.
+**Current status (v0.3):** implemented and tested on synthetic inputs. No actual Köln-Kalk GIS layers have been supplied. The example atlas is a software demonstration, not a thesis finding. The thesis was read as research material. Schwerdorf's original MURIEL presentation was retrieved and slides 19–20 checked; other technical/regulatory references still require primary-source verification.
 
 The real-data configuration is [config/koeln_kalk_sri5.json](config/koeln_kalk_sri5.json): **SRI5**, **30-year return period as stated by the user**, flood input in **centimetres**, intervention threshold **≥10 cm**. Confirm the SRI/event definition against the flood provider's metadata. An SRI number is not treated as a universal return-period conversion.
+
+## Guided QGIS setup
+
+Install [the QGIS plugin ZIP](downloads/nbs-stage1-plugin-v0.3.zip) through **Plugins → Manage and Install Plugins → Install from ZIP**. Then open **Plugins → NbS planning → NbS Stage 1 · opportunity mapping**. Select inputs, adjust the threshold, check readiness and run. The engine is bundled; no repository path or JSON editing is needed for guided setup. See the [step-by-step user guide](docs/USER_GUIDE.md).
+
+Version 0.3 adds grouped input checks, progress and cancellation, fast analysis without map printing, isolated unfinished runs, a searchable offline results dashboard and an evidence task register. Registered configurations preserve advanced evidence/combinations; the panel can copy them for a new threshold run. Spatial joins reuse coverage unions; MURIEL searches use indexed candidate filtering with exact geometry distances. Reasons, references and conservative missing-data treatment are preserved.
 
 ## Run in this cloud environment
 

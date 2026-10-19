@@ -1,0 +1,47 @@
+{
+  "baseline_commit": "488a43c17d268546cceb8de833a3b4bb25cd4758",
+  "before": {
+    "version": "0.2.0",
+    "qgis": "3.40.6-Bratislava",
+    "repeat": 5,
+    "overlay_250_units_40_fields_seconds": [
+      0.9832685099972878,
+      0.9779219870106317,
+      1.1043590390036115,
+      0.9959907459997339,
+      0.9822092240065103
+    ],
+    "overlay_median_seconds": 0.9832685099972878,
+    "workflow_120_cells_15_designs_no_printing_seconds": [
+      1.6198851649969583,
+      1.7031128859962337,
+      1.464003123997827,
+      1.4603190809866646,
+      1.464028321992373
+    ],
+    "workflow_median_seconds": 1.464028321992373,
+    "limitations": "Synthetic small inputs. Times depend on hardware, cache and profiling; no NRW city-scale capacity assertion."
+  },
+  "after": {
+    "version": "0.3.0",
+    "qgis": "3.40.6-Bratislava",
+    "repeat": 5,
+    "overlay_250_units_40_fields_seconds": [
+      0.3704905519989552,
+      0.21572533600556199,
+      0.21061853900027927,
+      0.20884694599953946,
+      0.21092210500501096
+    ],
+    "overlay_median_seconds": 0.21092210500501096,
+    "workflow_120_cells_15_designs_no_printing_seconds": [
+      1.5269699409982422,
+      1.2583397349953884,
+      1.272302741999738,
+      1.2371737140056212,
+      1.2565999510115944
+    ],
+    "workflow_median_seconds": 1.2583397349953884,
+    "limitations": "Synthetic small inputs. Times depend on hardware, cache and profiling; no NRW city-scale capacity assertion."
+  }
+}

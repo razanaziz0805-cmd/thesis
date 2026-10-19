@@ -1,6 +1,6 @@
 """Pure decision logic; explicit unknowns and a complete rule-by-rule audit."""
 
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 import math
 from .catalogue import DEFAULT_POLICY, DESIGNS, SOURCES
 
@@ -46,7 +46,9 @@ class Decision:
     closure: str
 
     def record(self):
-        return {**asdict(self), **{"citation": SOURCES[self.source_id]["citation"],
+        # All decision fields are immutable scalars; recursive deepcopy through
+        # dataclasses.asdict added substantial cost to every audit row.
+        return {**vars(self), **{"citation": SOURCES[self.source_id]["citation"],
                                 "source_url": SOURCES[self.source_id]["url"],
                                 "source_locator": SOURCES[self.source_id]["locator"]}}
 
