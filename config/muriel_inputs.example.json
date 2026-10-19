@@ -1,0 +1,25 @@
+{
+  "_note": "Copy this muriel block into a complete run configuration. Register actual source evidence and complete coverage before changing flags to true. Paths are relative to the run JSON.",
+  "muriel": {
+    "enabled": true,
+    "thresholds": {"footprint_mode": "depth_mask", "flood_extent_depth_m": 0, "min_area_m2": 2000, "min_max_depth_m": 0.30, "receptor_distance_m": 1, "municipal_distance_m": 50, "destination_distance_m": 100, "protect_overlap_fraction": 0.70},
+    "receptors": [
+      {"path": "../data/muriel.gpkg", "layer": "buildings", "coverage_complete": false, "evidence_ref": null, "metadata": {"provider": "REQUIRED", "date": "REQUIRED", "version": "REQUIRED", "license": "REQUIRED", "coverage": "Entire study/search area; use surveyed footprints, not centroids"}},
+      {"path": "../data/muriel.gpkg", "layer": "sensitive_object_footprints", "coverage_complete": false, "evidence_ref": null, "metadata": {"provider": "REQUIRED", "date": "REQUIRED", "version": "REQUIRED", "license": "REQUIRED"}}
+    ],
+    "municipal_land": {"path": "../data/muriel.gpkg", "layer": "ownership", "class_field": "owner_category", "municipal_values": ["CITY"], "municipal_verified": false, "coverage_complete": false, "evidence_ref": null, "metadata": {"provider": "REQUIRED", "date": "REQUIRED", "version": "REQUIRED", "license": "REQUIRED; authorized ownership data", "coverage": "Study area and at least the 100 m destination search extension"}},
+    "roads": {"path": "../data/muriel.gpkg", "layer": "road_polygons", "coverage_complete": false, "evidence_ref": null, "metadata": {"provider": "REQUIRED", "date": "REQUIRED", "version": "REQUIRED", "license": "REQUIRED", "geometry": "Actual road footprint polygons; no guessed centreline buffers"}},
+    "usable_space": {"path": "../data/muriel.gpkg", "layer": "locally_assessed_multifunctional_space", "id_field": "destination_id", "usable_field": "usable", "coverage_complete": false, "evidence_ref": null, "metadata": {"provider": "REQUIRED", "date": "REQUIRED", "version": "REQUIRED", "license": "REQUIRED", "classification": "Locally documented MURIEL usability; green land use alone does not certify safe temporary flooding"}},
+    "routes": null
+  },
+  "route_layer_fields": {
+    "hotspot_id": "Exact ID from muriel_hotspots; rerun the source screen first if the footprint definition changes",
+    "destination_id": "Exact source usable-space ID",
+    "geometry": "Single directed line: first point in/on hotspot, last point in/on selected destination",
+    "topography_compatible": "true/false/null from referenced survey/design evidence",
+    "flow_routing_safe": "true/false/null from referenced flow/inlet/outlet/exceedance evidence",
+    "downstream_receptors_safe": "true/false/null from referenced receptor assessment",
+    "route_land_control_ok": "true/false/null from referenced rights/access evidence",
+    "evidence_ref": "Dated route-specific assessment, not a file name alone"
+  }
+}

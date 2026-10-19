@@ -1,0 +1,81 @@
+{
+  "run_id": "KALK_SRI5_10CM_V001",
+  "area_label": "Köln-Kalk · study boundary to be supplied",
+  "scenario_id": "SRI5",
+  "scenario_description": "User-selected baseline; confirm event definition against provider metadata",
+  "stated_return_period_years": 30,
+  "return_period_source": "User statement; confirm with flood-layer provider. SRI5 is not assumed to imply a universal return period.",
+  "groundwater_scenario_id": "HIGH_GROUNDWATER_TO_BE_DOCUMENTED",
+  "crs": "EPSG:25832",
+  "vertical_datum": null,
+  "flood_threshold_m": 0.10,
+  "max_units": 250000,
+  "flood": {
+    "path": "../data/flood_sri5_cm.tif",
+    "type": "raster",
+    "band": 1,
+    "units": "cm",
+    "metadata": {
+      "provider": "REQUIRED",
+      "version": "REQUIRED",
+      "date": "REQUIRED",
+      "license": "REQUIRED",
+      "evidence_class": "modelled",
+      "limitations": "REQUIRED; distinguish peak depth from event-synchronous depth"
+    }
+  },
+  "study_area": {
+    "path": "../data/site.gpkg",
+    "layer": "study_area",
+    "metadata": {
+      "provider": "REQUIRED",
+      "version": "REQUIRED",
+      "date": "REQUIRED",
+      "license": "REQUIRED",
+      "extent_definition": "State Stadtteil Kalk or document any hydrological extension"
+    }
+  },
+  "evidence": [],
+  "raster_evidence": [],
+  "distance_evidence": [],
+  "derived_module_bases": [],
+  "ownership": null,
+  "policy": {
+    "profile_id": "koeln_thesis_provisional_v1",
+    "rule_scope": "Koeln",
+    "municipality": "Koeln",
+    "profile_reviewed": false,
+    "profile_review_ref": null,
+    "groundwater_preferred_m": 1.0,
+    "groundwater_floor_m": 0.5,
+    "neighbour_setback_m": 2.0,
+    "basement_recommended_m": 6.0,
+    "asset_clearance_m": 1.0
+  },
+  "designs": [
+    "green_roof", "blue_green_roof", "surface_infiltration", "swale_infiltration",
+    "rain_garden_infiltration", "rain_garden_lined", "tree_trench_infiltration",
+    "tree_trench_lined", "permeable_pavement_infiltration", "permeable_pavement_lined",
+    "infiltration_trench", "swale_trench", "infiltration_shaft", "lined_detention", "safe_conveyance"
+  ],
+  "combinations": [],
+  "muriel": {
+    "enabled": true,
+    "thresholds": {
+      "footprint_mode": "depth_mask",
+      "flood_extent_depth_m": 0.0,
+      "min_area_m2": 2000.0,
+      "min_max_depth_m": 0.30,
+      "receptor_distance_m": 1.0,
+      "municipal_distance_m": 50.0,
+      "destination_distance_m": 100.0,
+      "protect_overlap_fraction": 0.70
+    },
+    "receptors": [],
+    "municipal_land": null,
+    "roads": null,
+    "usable_space": null,
+    "routes": null
+  },
+  "output_dir": "../outputs/KALK_SRI5_10CM_V001"
+}

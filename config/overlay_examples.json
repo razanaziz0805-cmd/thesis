@@ -1,0 +1,35 @@
+{
+  "_note": "Examples to copy into the evidence/ownership/combinations fields of a run config; not a standalone run configuration. All paths resolve relative to that run config.",
+  "evidence_id_join": {
+    "path": "../data/site.gpkg", "layer": "site_evidence",
+    "join": "id", "id_field": "unit_id",
+    "metadata": {"provider": "REQUIRED", "date": "REQUIRED", "version": "REQUIRED", "license": "REQUIRED"}
+  },
+  "evidence_spatial_join": {
+    "path": "../data/site.gpkg", "layer": "water_protection_coverage",
+    "join": "spatial",
+    "fields": {"protection_zone": "zone_class"},
+    "metadata": {"provider": "REQUIRED", "date": "REQUIRED", "version": "REQUIRED", "license": "REQUIRED", "coverage": "Include an explicit OUTSIDE polygon for verified uncovered territory; absent coverage is unknown"}
+  },
+  "ownership": {
+    "path": "../data/site.gpkg", "layer": "ownership",
+    "class_field": "owner_category",
+    "mapping": {"CITY": "municipal", "PRIVATE": "private", "STATE_OR_OTHER_PUBLIC": "other_public", "UNKNOWN": "unknown"},
+    "metadata": {"provider": "REQUIRED", "date": "REQUIRED", "version": "REQUIRED", "license": "REQUIRED; access-controlled parcel data may not be redistributed"}
+  },
+  "combination_example": {
+    "id": "roof_to_lined_tree_001",
+    "evidence_ref": null,
+    "modules": [
+      {"unit_id": "REPLACE_ROOF_UNIT", "design": "green_roof", "module_id": "roof_001", "footprint_id": "roof_001_geometry", "allocated_area_m2": null, "source_id": "roof_source_001", "source_fraction": 1},
+      {"unit_id": "REPLACE_TREE_UNIT", "design": "tree_trench_lined", "module_id": "tree_001", "footprint_id": "tree_001_geometry", "allocated_area_m2": null, "source_id": "roof_source_001", "source_fraction": 0}
+    ],
+    "links": [{"from": "roof_001", "to": "tree_001", "evidence_ref": null}],
+    "layout_verified": null,
+    "hydraulic_link_verified": null,
+    "shared_source_accounting_verified": null,
+    "shared_storage_accounting_verified": null,
+    "outlet_capacity_verified": null,
+    "ownership_operation_verified": null
+  }
+}

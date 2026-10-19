@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+data/
+outputs/
+deliverables/
+.venv/
+*.qgz~
+*.gpkg-shm
+*.gpkg-wal

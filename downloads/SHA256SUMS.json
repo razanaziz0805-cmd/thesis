@@ -1,0 +1,22 @@
+{
+  "stage1-atlas-including-muriel.pdf": {
+    "bytes": 5341178,
+    "sha256": "bcd86a38505c24aa9d83ec1126ec62616af42495a2c8bcf3602aa2f695de92f9"
+  },
+  "muriel-screening-atlas.pdf": {
+    "bytes": 1403575,
+    "sha256": "8b9b3747c0c927edc062f6ea7fd7bc32e127070af4b5c44c0016eb737ba68c4a"
+  },
+  "nbs-stage1-qgis.zip": {
+    "bytes": 11847180,
+    "sha256": "1ac6826fdd2358cb212366fc308741db73aa239ab42e1b54d86c93f27c7f6b33"
+  },
+  "muriel-decisions.csv": {
+    "bytes": 51243,
+    "sha256": "5bfb140fa757eda3e82b7bd36dea3fefcdade92d717efee37e5c97bd50c5c9f8"
+  },
+  "muriel-priority-preview.png": {
+    "bytes": 278863,
+    "sha256": "1b133078b9f9377da43acf2406b1b3d23be9edf5297f1e1d6b27579de9325e55"
+  }
+}

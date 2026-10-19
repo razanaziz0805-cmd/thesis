@@ -1,0 +1,687 @@
+hotspot_id,hotspot_label,area_m2,max_depth_m,source_unit_ids,boundary_incomplete,extent_note,receptor_distance_m,receptor_coverage_complete,municipal_distance_m,municipal_coverage_complete,destination_distance_m,destination_coverage_complete,overlap_fraction,overlap_coverage_complete,best_route_status,route_note,preliminary_infiltration_status,evidence_ref,planning_class,overlap_percent,nearby_destination_ids,scenario_id,run_id,is_demo,status,reason_codes,explanation,source_ids
+MUR_da6c809ebb21,M01,3200.0,0.45,"[""protect_0"", ""protect_1"", ""protect_2"", ""protect_3""]",False,"Interior, known adjacent depth coverage",0.5,True,0.0,True,0.0,True,0.75,True,CONDITIONAL,1 explicit / proximity connection records; route evidence is independent of distance,CONDITIONAL,SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE,PROTECT_RETENTION,75.0,S_PROTECT,SYNTHETIC_SRI5,DEMO_MURIEL_SRI5_V1,1,ADMISSIBLE,,"[ADMISSIBLE] MURIEL_SOURCE_TRACEABILITY: Traceable source inventories for this screen
+Observed: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Expected: Dated source inventory / evidence-register references
+Source: Abdulaziz, L. (2026). Nature-based Solutions NbS opportunity mapping and portfolio design in Köln-Kalk for pluvial flooding | §§5.4–5.5; Tables 4.2, 5.3–5.4
+
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_FOOTPRINT_DEFINITION: Registered flood-footprint interpretation
+Observed: depth_mask
+Expected: depth_mask: cells > depth criterion; inundation_maximum: wet extent plus separate maximum-depth test
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_AREA: Connected flood-polygon area
+Observed: 3200.0
+Expected: > 2000 m² (strict)
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_MAX_DEPTH: Connected flood-polygon maximum depth
+Observed: 0.45
+Expected: > 0.3 m (strict)
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_EXTENT_EVIDENCE: Observed footprint is interior and not adjacent to flood NoData
+Observed: Interior, known adjacent depth coverage
+Expected: Untruncated flood extent and known adjacent depth coverage
+Source: Abdulaziz, L. (2026). Nature-based Solutions NbS opportunity mapping and portfolio design in Köln-Kalk for pluvial flooding | §§5.4–5.5; Tables 4.2, 5.3–5.4
+
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_RECEPTOR: Building or sensitive-object adjacency
+Observed: {'distance_m': 0.5, 'inventory_complete': True}
+Expected: < 1 m; polygon-edge distance
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_RECEPTORS
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_MUNICIPAL: Verified non-road municipal land availability
+Observed: {'distance_m': 0.0, 'inventory_complete': True}
+Expected: < 50 m; polygon-edge distance
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_DESTINATION: Verified usable municipal destination space
+Observed: {'distance_m': 0.0, 'inventory_complete': True}
+Expected: ≤ 100 m; polygon-edge distance
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_RETENTION_FUNCTION: Existing retention function to protect
+Observed: 0.75
+Expected: ≥ 70% verified usable municipal, non-road overlap; union removes duplicates
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[NOT_APPLICABLE] MURIEL_ROUTING: Topographic/flow route, downstream safety and land-control evidence for a specific hotspot–destination pair
+Observed: 1 explicit / proximity connection records; route evidence is independent of distance
+Expected: A nearby polygon or straight proximity line is not proof of safe routing
+Source: Abdulaziz, L. (2026). Nature-based Solutions NbS opportunity mapping and portfolio design in Köln-Kalk for pluvial flooding | §§5.4–5.5; Tables 4.2, 5.3–5.4
+
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[NOT_APPLICABLE] MURIEL_GROUNDWATER_CROSSWALK: Groundwater screen retained separately; MURIEL does not grant infiltration permission
+Observed: CONDITIONAL
+Expected: Assess actual infiltrating or lined pathway using independent NbS gates
+Source: Abdulaziz, L. (2026). Nature-based Solutions NbS opportunity mapping and portfolio design in Köln-Kalk for pluvial flooding | §§5.4–5.5; Tables 4.2, 5.3–5.4
+
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule",MURIEL; THESIS
+MUR_c4ea89558427,M02,3200.0,0.5,"[""retrofit""]",False,"Interior, known adjacent depth coverage",0.5,True,10.0,True,10.0,True,0.0,True,ADMISSIBLE,1 explicit / proximity connection records; route evidence is independent of distance,CONDITIONAL,SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE,RETROFIT_CANDIDATE,0.0,S_RETROFIT,SYNTHETIC_SRI5,DEMO_MURIEL_SRI5_V1,1,ADMISSIBLE,,"[ADMISSIBLE] MURIEL_SOURCE_TRACEABILITY: Traceable source inventories for this screen
+Observed: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Expected: Dated source inventory / evidence-register references
+Source: Abdulaziz, L. (2026). Nature-based Solutions NbS opportunity mapping and portfolio design in Köln-Kalk for pluvial flooding | §§5.4–5.5; Tables 4.2, 5.3–5.4
+
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_FOOTPRINT_DEFINITION: Registered flood-footprint interpretation
+Observed: depth_mask
+Expected: depth_mask: cells > depth criterion; inundation_maximum: wet extent plus separate maximum-depth test
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_AREA: Connected flood-polygon area
+Observed: 3200.0
+Expected: > 2000 m² (strict)
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_MAX_DEPTH: Connected flood-polygon maximum depth
+Observed: 0.5
+Expected: > 0.3 m (strict)
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_EXTENT_EVIDENCE: Observed footprint is interior and not adjacent to flood NoData
+Observed: Interior, known adjacent depth coverage
+Expected: Untruncated flood extent and known adjacent depth coverage
+Source: Abdulaziz, L. (2026). Nature-based Solutions NbS opportunity mapping and portfolio design in Köln-Kalk for pluvial flooding | §§5.4–5.5; Tables 4.2, 5.3–5.4
+
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_RECEPTOR: Building or sensitive-object adjacency
+Observed: {'distance_m': 0.5, 'inventory_complete': True}
+Expected: < 1 m; polygon-edge distance
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_RECEPTORS
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_MUNICIPAL: Verified non-road municipal land availability
+Observed: {'distance_m': 10.0, 'inventory_complete': True}
+Expected: < 50 m; polygon-edge distance
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_DESTINATION: Verified usable municipal destination space
+Observed: {'distance_m': 10.0, 'inventory_complete': True}
+Expected: ≤ 100 m; polygon-edge distance
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_RETENTION_FUNCTION: Existing-retention overlap below criterion
+Observed: 0.0
+Expected: ≥ 70% verified usable municipal, non-road overlap; union removes duplicates
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_ROUTING: Topographic/flow route, downstream safety and land-control evidence for a specific hotspot–destination pair
+Observed: 1 explicit / proximity connection records; route evidence is independent of distance
+Expected: A nearby polygon or straight proximity line is not proof of safe routing
+Source: Abdulaziz, L. (2026). Nature-based Solutions NbS opportunity mapping and portfolio design in Köln-Kalk for pluvial flooding | §§5.4–5.5; Tables 4.2, 5.3–5.4
+
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[NOT_APPLICABLE] MURIEL_GROUNDWATER_CROSSWALK: Groundwater screen retained separately; MURIEL does not grant infiltration permission
+Observed: CONDITIONAL
+Expected: Assess actual infiltrating or lined pathway using independent NbS gates
+Source: Abdulaziz, L. (2026). Nature-based Solutions NbS opportunity mapping and portfolio design in Köln-Kalk for pluvial flooding | §§5.4–5.5; Tables 4.2, 5.3–5.4
+
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule",MURIEL; THESIS
+MUR_779f79e348ec,M03,3200.0,0.55,"[""investigate""]",False,"Interior, known adjacent depth coverage",0.5,True,20.0,True,20.0,True,0.0,True,CONDITIONAL,1 explicit / proximity connection records; route evidence is independent of distance,CONDITIONAL,SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE,ROUTING_INVESTIGATION,0.0,S_INVESTIGATE,SYNTHETIC_SRI5,DEMO_MURIEL_SRI5_V1,1,CONDITIONAL,MURIEL_ROUTING,"[ADMISSIBLE] MURIEL_SOURCE_TRACEABILITY: Traceable source inventories for this screen
+Observed: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Expected: Dated source inventory / evidence-register references
+Source: Abdulaziz, L. (2026). Nature-based Solutions NbS opportunity mapping and portfolio design in Köln-Kalk for pluvial flooding | §§5.4–5.5; Tables 4.2, 5.3–5.4
+
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_FOOTPRINT_DEFINITION: Registered flood-footprint interpretation
+Observed: depth_mask
+Expected: depth_mask: cells > depth criterion; inundation_maximum: wet extent plus separate maximum-depth test
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_AREA: Connected flood-polygon area
+Observed: 3200.0
+Expected: > 2000 m² (strict)
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_MAX_DEPTH: Connected flood-polygon maximum depth
+Observed: 0.55
+Expected: > 0.3 m (strict)
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_EXTENT_EVIDENCE: Observed footprint is interior and not adjacent to flood NoData
+Observed: Interior, known adjacent depth coverage
+Expected: Untruncated flood extent and known adjacent depth coverage
+Source: Abdulaziz, L. (2026). Nature-based Solutions NbS opportunity mapping and portfolio design in Köln-Kalk for pluvial flooding | §§5.4–5.5; Tables 4.2, 5.3–5.4
+
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_RECEPTOR: Building or sensitive-object adjacency
+Observed: {'distance_m': 0.5, 'inventory_complete': True}
+Expected: < 1 m; polygon-edge distance
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_RECEPTORS
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_MUNICIPAL: Verified non-road municipal land availability
+Observed: {'distance_m': 20.0, 'inventory_complete': True}
+Expected: < 50 m; polygon-edge distance
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_DESTINATION: Verified usable municipal destination space
+Observed: {'distance_m': 20.0, 'inventory_complete': True}
+Expected: ≤ 100 m; polygon-edge distance
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_RETENTION_FUNCTION: Existing-retention overlap below criterion
+Observed: 0.0
+Expected: ≥ 70% verified usable municipal, non-road overlap; union removes duplicates
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[CONDITIONAL] MURIEL_ROUTING: Topographic/flow route, downstream safety and land-control evidence for a specific hotspot–destination pair
+Observed: 1 explicit / proximity connection records; route evidence is independent of distance
+Expected: A nearby polygon or straight proximity line is not proof of safe routing
+Source: Abdulaziz, L. (2026). Nature-based Solutions NbS opportunity mapping and portfolio design in Köln-Kalk for pluvial flooding | §§5.4–5.5; Tables 4.2, 5.3–5.4
+
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: Survey and document a specific source–inlet–destination–outlet/exceedance route and its safety/rights; re-evaluate failed routes separately.
+
+[NOT_APPLICABLE] MURIEL_GROUNDWATER_CROSSWALK: Groundwater screen retained separately; MURIEL does not grant infiltration permission
+Observed: CONDITIONAL
+Expected: Assess actual infiltrating or lined pathway using independent NbS gates
+Source: Abdulaziz, L. (2026). Nature-based Solutions NbS opportunity mapping and portfolio design in Köln-Kalk for pluvial flooding | §§5.4–5.5; Tables 4.2, 5.3–5.4
+
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule",MURIEL; THESIS
+MUR_7fd85352106b,M04,3200.0,0.45,"[""no_destination""]",False,"Interior, known adjacent depth coverage",0.5,True,10.0,True,260.0,True,0.0,True,CONDITIONAL,0 explicit / proximity connection records; route evidence is independent of distance,CONDITIONAL,SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE,NO_DESTINATION,0.0,,SYNTHETIC_SRI5,DEMO_MURIEL_SRI5_V1,1,FAIL,MURIEL_DESTINATION,"[ADMISSIBLE] MURIEL_SOURCE_TRACEABILITY: Traceable source inventories for this screen
+Observed: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Expected: Dated source inventory / evidence-register references
+Source: Abdulaziz, L. (2026). Nature-based Solutions NbS opportunity mapping and portfolio design in Köln-Kalk for pluvial flooding | §§5.4–5.5; Tables 4.2, 5.3–5.4
+
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_FOOTPRINT_DEFINITION: Registered flood-footprint interpretation
+Observed: depth_mask
+Expected: depth_mask: cells > depth criterion; inundation_maximum: wet extent plus separate maximum-depth test
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_AREA: Connected flood-polygon area
+Observed: 3200.0
+Expected: > 2000 m² (strict)
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_MAX_DEPTH: Connected flood-polygon maximum depth
+Observed: 0.45
+Expected: > 0.3 m (strict)
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_EXTENT_EVIDENCE: Observed footprint is interior and not adjacent to flood NoData
+Observed: Interior, known adjacent depth coverage
+Expected: Untruncated flood extent and known adjacent depth coverage
+Source: Abdulaziz, L. (2026). Nature-based Solutions NbS opportunity mapping and portfolio design in Köln-Kalk for pluvial flooding | §§5.4–5.5; Tables 4.2, 5.3–5.4
+
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_RECEPTOR: Building or sensitive-object adjacency
+Observed: {'distance_m': 0.5, 'inventory_complete': True}
+Expected: < 1 m; polygon-edge distance
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_RECEPTORS
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_MUNICIPAL: Verified non-road municipal land availability
+Observed: {'distance_m': 10.0, 'inventory_complete': True}
+Expected: < 50 m; polygon-edge distance
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[FAIL] MURIEL_DESTINATION: Verified usable municipal destination space
+Observed: {'distance_m': 260.0, 'inventory_complete': True}
+Expected: ≤ 100 m; polygon-edge distance
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: Obtain complete source coverage and confirm the relevant inventory / ownership / non-road / usability classification.
+
+[ADMISSIBLE] MURIEL_RETENTION_FUNCTION: Existing-retention overlap below criterion
+Observed: 0.0
+Expected: ≥ 70% verified usable municipal, non-road overlap; union removes duplicates
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[NOT_APPLICABLE] MURIEL_ROUTING: Topographic/flow route, downstream safety and land-control evidence for a specific hotspot–destination pair
+Observed: 0 explicit / proximity connection records; route evidence is independent of distance
+Expected: A nearby polygon or straight proximity line is not proof of safe routing
+Source: Abdulaziz, L. (2026). Nature-based Solutions NbS opportunity mapping and portfolio design in Köln-Kalk for pluvial flooding | §§5.4–5.5; Tables 4.2, 5.3–5.4
+
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[NOT_APPLICABLE] MURIEL_GROUNDWATER_CROSSWALK: Groundwater screen retained separately; MURIEL does not grant infiltration permission
+Observed: CONDITIONAL
+Expected: Assess actual infiltrating or lined pathway using independent NbS gates
+Source: Abdulaziz, L. (2026). Nature-based Solutions NbS opportunity mapping and portfolio design in Köln-Kalk for pluvial flooding | §§5.4–5.5; Tables 4.2, 5.3–5.4
+
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule",MURIEL; THESIS
+MUR_1fdfe2d7fd22,M05,3200.0,0.45,"[""no_receptor""]",False,"Interior, known adjacent depth coverage",220.00056818108447,True,10.0,True,10.0,True,0.0,True,CONDITIONAL,1 explicit / proximity connection records; route evidence is independent of distance,CONDITIONAL,SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE,OUTSIDE_PRIORITY,0.0,S_OUTSIDE,SYNTHETIC_SRI5,DEMO_MURIEL_SRI5_V1,1,FAIL,MURIEL_RECEPTOR,"[ADMISSIBLE] MURIEL_SOURCE_TRACEABILITY: Traceable source inventories for this screen
+Observed: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Expected: Dated source inventory / evidence-register references
+Source: Abdulaziz, L. (2026). Nature-based Solutions NbS opportunity mapping and portfolio design in Köln-Kalk for pluvial flooding | §§5.4–5.5; Tables 4.2, 5.3–5.4
+
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_FOOTPRINT_DEFINITION: Registered flood-footprint interpretation
+Observed: depth_mask
+Expected: depth_mask: cells > depth criterion; inundation_maximum: wet extent plus separate maximum-depth test
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_AREA: Connected flood-polygon area
+Observed: 3200.0
+Expected: > 2000 m² (strict)
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_MAX_DEPTH: Connected flood-polygon maximum depth
+Observed: 0.45
+Expected: > 0.3 m (strict)
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_EXTENT_EVIDENCE: Observed footprint is interior and not adjacent to flood NoData
+Observed: Interior, known adjacent depth coverage
+Expected: Untruncated flood extent and known adjacent depth coverage
+Source: Abdulaziz, L. (2026). Nature-based Solutions NbS opportunity mapping and portfolio design in Köln-Kalk for pluvial flooding | §§5.4–5.5; Tables 4.2, 5.3–5.4
+
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[FAIL] MURIEL_RECEPTOR: Building or sensitive-object adjacency
+Observed: {'distance_m': 220.00056818108447, 'inventory_complete': True}
+Expected: < 1 m; polygon-edge distance
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_RECEPTORS
+Responsible: Site designer / evidence owner
+Close: Obtain complete source coverage and confirm the relevant inventory / ownership / non-road / usability classification.
+
+[ADMISSIBLE] MURIEL_MUNICIPAL: Verified non-road municipal land availability
+Observed: {'distance_m': 10.0, 'inventory_complete': True}
+Expected: < 50 m; polygon-edge distance
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_DESTINATION: Verified usable municipal destination space
+Observed: {'distance_m': 10.0, 'inventory_complete': True}
+Expected: ≤ 100 m; polygon-edge distance
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_RETENTION_FUNCTION: Existing-retention overlap below criterion
+Observed: 0.0
+Expected: ≥ 70% verified usable municipal, non-road overlap; union removes duplicates
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[NOT_APPLICABLE] MURIEL_ROUTING: Topographic/flow route, downstream safety and land-control evidence for a specific hotspot–destination pair
+Observed: 1 explicit / proximity connection records; route evidence is independent of distance
+Expected: A nearby polygon or straight proximity line is not proof of safe routing
+Source: Abdulaziz, L. (2026). Nature-based Solutions NbS opportunity mapping and portfolio design in Köln-Kalk for pluvial flooding | §§5.4–5.5; Tables 4.2, 5.3–5.4
+
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[NOT_APPLICABLE] MURIEL_GROUNDWATER_CROSSWALK: Groundwater screen retained separately; MURIEL does not grant infiltration permission
+Observed: CONDITIONAL
+Expected: Assess actual infiltrating or lined pathway using independent NbS gates
+Source: Abdulaziz, L. (2026). Nature-based Solutions NbS opportunity mapping and portfolio design in Köln-Kalk for pluvial flooding | §§5.4–5.5; Tables 4.2, 5.3–5.4
+
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule",MURIEL; THESIS
+MUR_9f294331a5ad,M06,2000.0,0.5,"[""area_exact""]",False,"Interior, known adjacent depth coverage",0.5,True,250.0,True,250.0,True,0.0,True,CONDITIONAL,0 explicit / proximity connection records; route evidence is independent of distance,CONDITIONAL,SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE,BELOW_SCREEN,0.0,,SYNTHETIC_SRI5,DEMO_MURIEL_SRI5_V1,1,FAIL,MURIEL_AREA; MURIEL_MUNICIPAL; MURIEL_DESTINATION,"[ADMISSIBLE] MURIEL_SOURCE_TRACEABILITY: Traceable source inventories for this screen
+Observed: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Expected: Dated source inventory / evidence-register references
+Source: Abdulaziz, L. (2026). Nature-based Solutions NbS opportunity mapping and portfolio design in Köln-Kalk for pluvial flooding | §§5.4–5.5; Tables 4.2, 5.3–5.4
+
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_FOOTPRINT_DEFINITION: Registered flood-footprint interpretation
+Observed: depth_mask
+Expected: depth_mask: cells > depth criterion; inundation_maximum: wet extent plus separate maximum-depth test
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[FAIL] MURIEL_AREA: Connected flood-polygon area
+Observed: 2000.0
+Expected: > 2000 m² (strict)
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: Check source flood extent, depth units and scenario; retain polygons below the screen in the audit.
+
+[ADMISSIBLE] MURIEL_MAX_DEPTH: Connected flood-polygon maximum depth
+Observed: 0.5
+Expected: > 0.3 m (strict)
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_EXTENT_EVIDENCE: Observed footprint is interior and not adjacent to flood NoData
+Observed: Interior, known adjacent depth coverage
+Expected: Untruncated flood extent and known adjacent depth coverage
+Source: Abdulaziz, L. (2026). Nature-based Solutions NbS opportunity mapping and portfolio design in Köln-Kalk for pluvial flooding | §§5.4–5.5; Tables 4.2, 5.3–5.4
+
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_RECEPTOR: Building or sensitive-object adjacency
+Observed: {'distance_m': 0.5, 'inventory_complete': True}
+Expected: < 1 m; polygon-edge distance
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_RECEPTORS
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[FAIL] MURIEL_MUNICIPAL: Verified non-road municipal land availability
+Observed: {'distance_m': 250.0, 'inventory_complete': True}
+Expected: < 50 m; polygon-edge distance
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS
+Responsible: Site designer / evidence owner
+Close: Obtain complete source coverage and confirm the relevant inventory / ownership / non-road / usability classification.
+
+[FAIL] MURIEL_DESTINATION: Verified usable municipal destination space
+Observed: {'distance_m': 250.0, 'inventory_complete': True}
+Expected: ≤ 100 m; polygon-edge distance
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: Obtain complete source coverage and confirm the relevant inventory / ownership / non-road / usability classification.
+
+[ADMISSIBLE] MURIEL_RETENTION_FUNCTION: Existing-retention overlap below criterion
+Observed: 0.0
+Expected: ≥ 70% verified usable municipal, non-road overlap; union removes duplicates
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[NOT_APPLICABLE] MURIEL_ROUTING: Topographic/flow route, downstream safety and land-control evidence for a specific hotspot–destination pair
+Observed: 0 explicit / proximity connection records; route evidence is independent of distance
+Expected: A nearby polygon or straight proximity line is not proof of safe routing
+Source: Abdulaziz, L. (2026). Nature-based Solutions NbS opportunity mapping and portfolio design in Köln-Kalk for pluvial flooding | §§5.4–5.5; Tables 4.2, 5.3–5.4
+
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[NOT_APPLICABLE] MURIEL_GROUNDWATER_CROSSWALK: Groundwater screen retained separately; MURIEL does not grant infiltration permission
+Observed: CONDITIONAL
+Expected: Assess actual infiltrating or lined pathway using independent NbS gates
+Source: Abdulaziz, L. (2026). Nature-based Solutions NbS opportunity mapping and portfolio design in Köln-Kalk for pluvial flooding | §§5.4–5.5; Tables 4.2, 5.3–5.4
+
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule",MURIEL; THESIS
+MUR_684b1a47ff5f,M07,3200.0,0.5,"[""unsafe_route""]",False,"Interior, known adjacent depth coverage",0.5,True,10.0,True,10.0,True,0.0,True,FAIL,1 explicit / proximity connection records; route evidence is independent of distance,CONDITIONAL,SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE,ROUTE_UNSUITABLE,0.0,S_UNSAFE,SYNTHETIC_SRI5,DEMO_MURIEL_SRI5_V1,1,FAIL,MURIEL_ROUTING,"[ADMISSIBLE] MURIEL_SOURCE_TRACEABILITY: Traceable source inventories for this screen
+Observed: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Expected: Dated source inventory / evidence-register references
+Source: Abdulaziz, L. (2026). Nature-based Solutions NbS opportunity mapping and portfolio design in Köln-Kalk for pluvial flooding | §§5.4–5.5; Tables 4.2, 5.3–5.4
+
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_FOOTPRINT_DEFINITION: Registered flood-footprint interpretation
+Observed: depth_mask
+Expected: depth_mask: cells > depth criterion; inundation_maximum: wet extent plus separate maximum-depth test
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_AREA: Connected flood-polygon area
+Observed: 3200.0
+Expected: > 2000 m² (strict)
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_MAX_DEPTH: Connected flood-polygon maximum depth
+Observed: 0.5
+Expected: > 0.3 m (strict)
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_EXTENT_EVIDENCE: Observed footprint is interior and not adjacent to flood NoData
+Observed: Interior, known adjacent depth coverage
+Expected: Untruncated flood extent and known adjacent depth coverage
+Source: Abdulaziz, L. (2026). Nature-based Solutions NbS opportunity mapping and portfolio design in Köln-Kalk for pluvial flooding | §§5.4–5.5; Tables 4.2, 5.3–5.4
+
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_RECEPTOR: Building or sensitive-object adjacency
+Observed: {'distance_m': 0.5, 'inventory_complete': True}
+Expected: < 1 m; polygon-edge distance
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_RECEPTORS
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_MUNICIPAL: Verified non-road municipal land availability
+Observed: {'distance_m': 10.0, 'inventory_complete': True}
+Expected: < 50 m; polygon-edge distance
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_DESTINATION: Verified usable municipal destination space
+Observed: {'distance_m': 10.0, 'inventory_complete': True}
+Expected: ≤ 100 m; polygon-edge distance
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[ADMISSIBLE] MURIEL_RETENTION_FUNCTION: Existing-retention overlap below criterion
+Observed: 0.0
+Expected: ≥ 70% verified usable municipal, non-road overlap; union removes duplicates
+Source: Schwerdorf (2022). Umsetzung von multifunktionalen Flächen in Köln-Porz/Eil | Schwerdorf presentation slides 19–20; thesis §§4.4.2, 5.5.3; local planning screen
+https://www.region-koeln-bonn.de/fileadmin/redaktion/pdf/regionaler_fachdialog/rkb-regionaler-fachdialog-starkregen-schwerdorf.pdf
+Evidence: SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule
+
+[FAIL] MURIEL_ROUTING: Topographic/flow route, downstream safety and land-control evidence for a specific hotspot–destination pair
+Observed: 1 explicit / proximity connection records; route evidence is independent of distance
+Expected: A nearby polygon or straight proximity line is not proof of safe routing
+Source: Abdulaziz, L. (2026). Nature-based Solutions NbS opportunity mapping and portfolio design in Köln-Kalk for pluvial flooding | §§5.4–5.5; Tables 4.2, 5.3–5.4
+
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: Survey and document a specific source–inlet–destination–outlet/exceedance route and its safety/rights; re-evaluate failed routes separately.
+
+[NOT_APPLICABLE] MURIEL_GROUNDWATER_CROSSWALK: Groundwater screen retained separately; MURIEL does not grant infiltration permission
+Observed: CONDITIONAL
+Expected: Assess actual infiltrating or lined pathway using independent NbS gates
+Source: Abdulaziz, L. (2026). Nature-based Solutions NbS opportunity mapping and portfolio design in Köln-Kalk for pluvial flooding | §§5.4–5.5; Tables 4.2, 5.3–5.4
+
+Evidence: SYNTHETIC_RECEPTORS; SYNTHETIC_MUNICIPAL_LAND; SYNTHETIC_ROADS; SYNTHETIC_USABLE_SPACE
+Responsible: Site designer / evidence owner
+Close: None for this screening rule",MURIEL; THESIS
