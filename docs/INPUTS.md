@@ -1,6 +1,8 @@
 # Stage 1 input specification
 
-Version 0.4 can prepare saved inputs before screening. See [automatic preparation](PREPARATION.md) for CRS corrections, clipping and grid alignment. The specifications below describe the prepared analysis inputs.
+Version 0.5 defaults to a [small-input planning workflow](PLANNING.md): only boundary and flood depths are required; one surface layer adds typology opportunities, with ownership and heat optional. The detailed fields below apply to engineering qualification.
+
+The engine can prepare saved inputs before screening. See [automatic preparation](PREPARATION.md) for CRS corrections, clipping and grid alignment. The specifications below describe the prepared analysis inputs.
 
 ## Minimum to produce an actual first map
 
@@ -58,9 +60,9 @@ Use **NULL** for absent/unknown evidence. Boolean `true`/1 means documented comp
 
 A groundwater-depth raster is useful preliminary evidence, but it does not determine the module-base-to-design-groundwater separation. If elevations or the design are absent, the final screen stays conditional. Represent high-groundwater and ordinary states in separate registered runs.
 
-## Common and typology-specific evidence
+## Common and typology-specific evidence · advanced design qualification
 
-All designs require `evidence_ref`, `functional_need_ok`, `source_pathway_ok`, `safe_overflow_ok`, `land_control_ok`, `access_ok`, `maintenance_assigned`, `construction_feasible`, `planning_compatible` and `design_geometry_confirmed`.
+In engineering mode, all designs require `evidence_ref`, `functional_need_ok`, `source_pathway_ok`, `safe_overflow_ok`, `land_control_ok`, `access_ok`, `maintenance_assigned`, `construction_feasible`, `planning_compatible` and `design_geometry_confirmed`.
 
 `permission_status` is `confirmed`, `not_required_confirmed`, `pending`, `refused` or null. Confirmed statuses need a dated decision/notification reference and applicable conditions. Lack of a permit is not the same as a refusal.
 

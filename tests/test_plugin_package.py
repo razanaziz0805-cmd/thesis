@@ -48,6 +48,14 @@ class PluginPackageTests(unittest.TestCase):
                 self.assertTrue((tmp/'bundled-demo/results/stage1.qgz').exists())
                 self.assertTrue(plugin.dialog.report_button.isEnabled())
                 self.assertIsNotNone(QgsProject.instance().mapLayer(sid))
+                from nbs_stage1.stage1.demo import create_planning_demo
+                planning_source=create_planning_demo(tmp/'bundled-planning')
+                plugin.dialog.use_configuration(planning_source)
+                self.assertEqual(plugin.dialog.mode.currentData(),'planning')
+                plugin.dialog.start_run();app.processEvents()
+                self.assertFalse(plugin.dialog.running)
+                self.assertTrue((tmp/'bundled-planning/results/planning_shortlist.csv').is_file())
+                self.assertIsNotNone(QgsProject.instance().mapLayer(sid))
                 QgsProject.instance().removeMapLayer(sid)
                 plugin.unload();self.assertEqual(iface.actions,[])
             finally:

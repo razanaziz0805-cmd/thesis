@@ -107,6 +107,8 @@ def inspect_config(source, base_dir=None):
                 required = [spec.get('class_field', 'owner_class')]
                 if not spec.get('mapping'):
                     result.add('ERROR', role, 'Ownership category mapping is missing.', 'Map source values to municipal, private, other_public or unknown.')
+            elif role.startswith('planning.'):
+                required = [spec['class_field']]
             elif role.startswith('evidence['):
                 required = list((spec.get('fields') or {}).values())
                 if spec.get('join', 'id') == 'id':
@@ -145,9 +147,14 @@ def inspect_config(source, base_dir=None):
             result.add('ERROR', 'Spatial extent', 'Flood raster and study boundary do not overlap.', 'Check layer selection and spatial references.')
         elif count > config.get('max_units',250000):
             result.add('ERROR', 'Analysis size', f'{count:,} cells exceeds the configured limit.', 'Partition the study or supply a justified polygon partition; no automatic coarsening is applied.')
-    if not config['policy']['profile_reviewed']:
+    planning = config.get('mode') == 'planning'
+    if planning:
+        result.facts['Decision stage'] = 'Planning opportunities; all retained concepts stay conditional until designed and qualified.'
+        if not (config.get('planning') or {}).get('surfaces'):
+            result.add('WARNING', 'Planning palette', 'No classified surface layer: flood action areas will be produced, but typologies cannot be assigned.', 'Add one surface polygon layer when available; no engineering design fields are required for this first map.')
+    if not planning and not config['policy']['profile_reviewed']:
         result.add('WARNING', 'Rule profile', 'Local technical and authority review is outstanding.', 'Final admissibility remains conditional until the review is referenced.')
-    if not config.get('evidence') and not config.get('raster_evidence'):
+    if not planning and not config.get('evidence') and not config.get('raster_evidence'):
         result.add('WARNING', 'NbS evidence', 'No site/groundwater evidence is registered.', 'You can produce the need map; unsupported NbS gates remain conditional.')
     m = config.get('muriel') or {}
     if m.get('enabled'):

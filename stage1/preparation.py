@@ -418,7 +418,7 @@ def check_run_sources(config):
     """Read-only checks before preparation; geometry/fields are checked afterwards."""
     from .configuration import input_specs
     issues=[]
-    if not config.get('evidence') and not config.get('raster_evidence'):
+    if config.get('mode') != 'planning' and not config.get('evidence') and not config.get('raster_evidence'):
         issues.append(('WARNING','Evidence','No design/groundwater evidence is registered.','Preparation does not close conditional suitability gates.'))
     for role,spec in input_specs(config):
         try:

@@ -12,6 +12,7 @@ def main(argv=None):
     demo = sub.add_parser('demo', help='Run clearly labelled synthetic demonstration')
     demo.add_argument('--directory', default='outputs/demo')
     demo.add_argument('--muriel', action='store_true')
+    demo.add_argument('--planning', action='store_true', help='Show the simplified urban-planning workflow')
     run = sub.add_parser('run', help='Run a registered configuration')
     run.add_argument('config')
     for command in (demo, run):
@@ -30,9 +31,9 @@ def main(argv=None):
     args = parser.parse_args(argv)
     try:
         if args.command == 'init':
-            from .configuration import starter_config
+            from .configuration import planning_config
             with Path(args.config).open('x', encoding='utf-8') as f:
-                json.dump(starter_config(), f, indent=2, ensure_ascii=False)
+                json.dump(planning_config(), f, indent=2, ensure_ascii=False)
             print(f'Starter saved: {args.config}. Select input files before running; gui offers a form.')
             return 0
         if args.command != 'gui':
@@ -52,8 +53,8 @@ def main(argv=None):
             print(prepare(args.config,progress=lambda p,m:print(f'[{p:.0f}%] {m}',file=sys.stderr,flush=True)))
             return 0
         if args.command == 'gui':
-            from .gui import StageOneDialog
-            dialog = StageOneDialog()
+            from .planning_gui import PlanningDialog
+            dialog = PlanningDialog()
             dialog.exec_()
             return 0
         from .preflight import inspect_config
@@ -62,8 +63,10 @@ def main(argv=None):
             print(json.dumps(result.as_dict(), indent=2) if args.json else result.text())
             return 0 if result.ok else 2
         if args.command == 'demo':
-            from .demo import create_demo, create_muriel_demo
-            config = (create_muriel_demo if args.muriel else create_demo)(Path(args.directory).resolve())
+            from .demo import create_demo, create_muriel_demo, create_planning_demo
+            if args.planning and args.muriel:
+                raise ValueError('Choose one demonstration: --planning or --muriel.')
+            config = (create_planning_demo if args.planning else create_muriel_demo if args.muriel else create_demo)(Path(args.directory).resolve())
         else:
             config = Path(args.config).resolve()
         checked = inspect_config(config)

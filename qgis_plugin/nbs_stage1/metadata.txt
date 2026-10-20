@@ -1,11 +1,11 @@
 [general]
 name=NbS Stage 1 Opportunity Mapping
 qgisMinimumVersion=3.40
-description=Guided flood, groundwater, NbS and MURIEL opportunity mapping with reasons and references.
-version=0.4.0
+description=Two-layer planning setup, flood action areas, NbS concepts and advanced MURIEL / design qualification.
+version=0.5.0
 author=Thesis workflow project
 email=
-about=Inventory, reproject, clip and align GIS inputs, then create auditable opportunity maps. Unknown CRS needs confirmation. Screening only; missing evidence stays conditional.
+about=Start with a flood-depth map and boundary. Add surface types, ownership and heat context when available. Create planning action areas, conditional NbS concepts, references and next actions. Advanced mode retains detailed design qualification and MURIEL. Automatic documented GIS preparation; no invented approvals or hydraulic benefits.
 category=Analysis
 experimental=True
 repository=https://github.com/razanaziz0805-cmd/thesis

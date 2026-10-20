@@ -182,3 +182,32 @@ def create_muriel_demo(directory):
                       'routes':spec('routes')}
     path.write_text(json.dumps(config,indent=2,ensure_ascii=False))
     return path
+
+
+def create_planning_demo(directory):
+    """Planning example with simple categorical layers, never real city evidence."""
+    path = create_demo(directory)
+    config = json.loads(path.read_text())
+    from .gis import load_vector
+    crs = QgsCoordinateReferenceSystem('EPSG:25832')
+    gpkg = path.parent/'inputs/synthetic.gpkg'
+    original = load_vector({'path':str(gpkg), 'layer':'evidence'}, crs)
+    surface_records = [({'surface':a['land_type'] if i != 15 else 'UNMAPPED'},g) for i,(g,a) in enumerate(original)]
+    write_layer(gpkg, memory_layer('surfaces', surface_records, crs), 'surfaces')
+    constraints = [({'protection_zone':a['protection_zone'], 'receiving_ground_clean':a['receiving_ground_clean'],
+                     'evidence_ref':'SYNTHETIC_PLANNING_CONSTRAINT'},g) for g,a in original]
+    write_layer(gpkg, memory_layer('planning_constraints', constraints, crs), 'planning_constraints')
+    heat = [({'heat':'HOT' if i % 12 >= 5 else 'OTHER'},g) for i,(g,a) in enumerate(original)]
+    write_layer(gpkg, memory_layer('heat', heat, crs), 'heat')
+    meta = config['study_area']['metadata']
+    config.update(mode='planning', run_id='DEMO_PLANNING_SRI5_V05', combinations=[],
+                  groundwater_scenario_id='UNKNOWN_DESIGN_GROUNDWATER', vertical_datum=None,
+                  policy={**DEFAULT_POLICY}, muriel={'enabled':False},
+                  evidence=[{'path':'inputs/synthetic.gpkg', 'layer':'planning_constraints', 'join':'spatial',
+                             'fields':{k:k for k in ('protection_zone','receiving_ground_clean','evidence_ref')}, 'metadata':meta}],
+                  planning={'surfaces':{'path':'inputs/synthetic.gpkg','layer':'surfaces','class_field':'surface',
+                                        'mapping':{k:k for k in ('roof','open_space','verge','pavement','parking','footway')}, 'metadata':meta},
+                            'heat':{'path':'inputs/synthetic.gpkg','layer':'heat','class_field':'heat',
+                                    'mapping':{'HOT':'priority','OTHER':'other'},'metadata':meta}})
+    path.write_text(json.dumps(config,indent=2,ensure_ascii=False))
+    return path

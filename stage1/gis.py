@@ -313,6 +313,11 @@ def derived_evidence(config, units, grid, crs, control=None):
             raise ValueError('Raster evidence units must be explicitly m, cm or category')
         by_row = {}
         for u in units:
+            if u['attrs'].get('grid_row') is None or u['attrs'].get('grid_col') is None:
+                # Planning also exposes uncovered study-area geometry as an
+                # unknown unit. It has no source pixel from which to sample.
+                u['attrs'][field] = None
+                continue
             by_row.setdefault(u['attrs']['grid_row'], []).append(u)
         for row, selected in by_row.items():
             if control:
@@ -464,7 +469,7 @@ def styled_layer(gpkg, table, name, field="status", subset=None):
             symbol = QgsFillSymbol.createSimple({"color": color, "outline_color": "#ffffff", "outline_width": "0.12"})
         categories.append(QgsRendererCategory(value, symbol, label))
     layer.setRenderer(QgsCategorizedSymbolRenderer(field, categories))
-    display = next((k for k in ('hotspot_label', 'connection_id', 'destination_id', 'unit_id', 'combination_id') if layer.fields().indexFromName(k) >= 0), None)
+    display = next((k for k in ('action_label', 'hotspot_label', 'connection_id', 'destination_id', 'unit_id', 'combination_id') if layer.fields().indexFromName(k) >= 0), None)
     if display:
         layer.setDisplayExpression('"' + display + '"')
     if layer.fields().indexFromName("explanation") >= 0:
@@ -473,7 +478,7 @@ def styled_layer(gpkg, table, name, field="status", subset=None):
     tip_status = '[% "status" %]' if layer.fields().indexFromName('status') >= 0 else 'Context only'
     layer.setMapTipTemplate(tip_header + '<br>' + tip_status + '<br><pre>[% replace(replace(replace("explanation", \'&\', \'&amp;\'), \'<\', \'&lt;\'), \'>\', \'&gt;\') %]</pre>')
     label_field = 'context_label' if table == 'muriel_context' else display
-    if table.startswith('muriel_') and label_field and table not in ('muriel_source_mask', 'muriel_hotspots', 'muriel_priority', 'muriel_connections'):
+    if (table == 'planning_action_areas' or table.startswith('muriel_') and table not in ('muriel_source_mask', 'muriel_hotspots', 'muriel_priority', 'muriel_connections')) and label_field:
         from qgis.core import QgsPalLayerSettings, QgsTextFormat, QgsTextBufferSettings, QgsVectorLayerSimpleLabeling
         labeling = QgsPalLayerSettings(); labeling.fieldName = label_field
         text_format = QgsTextFormat(); text_format.setFont(QFont('DejaVu Sans', 8)); text_format.setSize(8)
@@ -585,7 +590,11 @@ def run(config_path, export_maps=True, progress=None, cancelled=None):
     out.parent.mkdir(parents=True, exist_ok=True)
     staging = Path(tempfile.mkdtemp(prefix='.' + out.name + '_running_', dir=out.parent))
     try:
-        _run(config_path, export_maps, control, staging)
+        if config.get('mode') == 'planning':
+            from .planning_gis import run_planning
+            run_planning(config_path, export_maps, control, staging)
+        else:
+            _run(config_path, export_maps, control, staging)
         control.check()
         timings = control.finish()
         (staging / 'performance.json').write_text(json.dumps(timings, indent=2))
@@ -602,19 +611,8 @@ def run(config_path, export_maps=True, progress=None, cancelled=None):
     return out
 
 
-def _run(config_path, export_maps, control, out):
-    config = resolve_config(config_path)
-    crs = QgsCoordinateReferenceSystem(config.get('crs', 'EPSG:25832'))
-    if not crs.isValid() or crs.isGeographic() or crs.mapUnits() != Qgis.DistanceUnit.Meters:
-        raise ValueError("Use a valid projected CRS in metres")
-    # A private project protects an existing QGIS GUI session and its unsaved
-    # project from being cleared when the workflow runs through Processing.
-    project = QgsProject()
-    project.setCrs(crs)
-    control.phase(3, 'Reading flood depths and study boundary')
-    units, aoi, grid = read_units(config, crs, control)
-    control.phase(15, f'Joining evidence for {len(units):,} analysis units')
-    config['analysis_grid_description'] = (' × '.join(f'{v:g}' for v in grid['pixel_size_m']) + ' m; source grid retained') if grid['type'] == 'raster_cells' else 'Input polygon partition; source resolution applies'
+def attach_evidence(config, units, grid, crs, control):
+    """Shared evidence joins for planning and detailed qualification."""
     for spec in config.get('evidence', []):
         control.check()
         features = load_vector(spec, crs, control=control)
@@ -652,6 +650,23 @@ def _run(config_path, export_maps, control, out):
     else:
         for u in units:
             u['attrs'].update(owner_class='unknown', municipal_fraction=0., private_fraction=0., other_public_fraction=0., unknown_fraction=1., ownership_overlap_m2=0.)
+
+
+
+def _run(config_path, export_maps, control, out):
+    config = resolve_config(config_path)
+    crs = QgsCoordinateReferenceSystem(config.get('crs', 'EPSG:25832'))
+    if not crs.isValid() or crs.isGeographic() or crs.mapUnits() != Qgis.DistanceUnit.Meters:
+        raise ValueError("Use a valid projected CRS in metres")
+    # A private project protects an existing QGIS GUI session and its unsaved
+    # project from being cleared when the workflow runs through Processing.
+    project = QgsProject()
+    project.setCrs(crs)
+    control.phase(3, 'Reading flood depths and study boundary')
+    units, aoi, grid = read_units(config, crs, control)
+    control.phase(15, f'Joining evidence for {len(units):,} analysis units')
+    config['analysis_grid_description'] = (' × '.join(f'{v:g}' for v in grid['pixel_size_m']) + ' m; source grid retained') if grid['type'] == 'raster_cells' else 'Input polygon partition; source resolution applies'
+    attach_evidence(config, units, grid, crs, control)
 
     # Compute all checks before writing results; input and reference errors do not
     # leave a misleading completed output directory.

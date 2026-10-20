@@ -1,0 +1,87 @@
+{
+  "run_id": "KALK_SRI5_001",
+  "area_label": "Köln-Kalk",
+  "scenario_id": "SRI5",
+  "scenario_description": "Confirm the event definition against provider metadata.",
+  "stated_return_period_years": 30,
+  "return_period_source": "User statement; provider confirmation required.",
+  "groundwater_scenario_id": "UNKNOWN_DESIGN_GROUNDWATER",
+  "vertical_datum": null,
+  "crs": "EPSG:25832",
+  "flood_threshold_m": 0.1,
+  "max_units": 250000,
+  "flood": {
+    "path": "../data/flood_SRI5_cm.tif",
+    "type": "raster",
+    "units": "cm",
+    "band": 1,
+    "metadata": {
+      "provider": "REQUIRED",
+      "date": "REQUIRED",
+      "version": "REQUIRED",
+      "license": "REQUIRED"
+    }
+  },
+  "study_area": {
+    "path": "../data/study_area.gpkg",
+    "layer": "study_area",
+    "metadata": {
+      "provider": "REQUIRED",
+      "date": "REQUIRED",
+      "version": "REQUIRED",
+      "license": "REQUIRED"
+    }
+  },
+  "output_dir": "../outputs/kalk_planning_001",
+  "policy": {
+    "profile_id": "koeln_thesis_provisional_v1",
+    "rule_scope": "Koeln",
+    "municipality": "Koeln",
+    "profile_reviewed": false,
+    "profile_review_ref": null,
+    "groundwater_preferred_m": 1.0,
+    "groundwater_floor_m": 0.5,
+    "neighbour_setback_m": 2.0,
+    "basement_recommended_m": 6.0,
+    "asset_clearance_m": 1.0
+  },
+  "designs": [
+    "green_roof",
+    "blue_green_roof",
+    "surface_infiltration",
+    "swale_infiltration",
+    "rain_garden_infiltration",
+    "rain_garden_lined",
+    "tree_trench_infiltration",
+    "tree_trench_lined",
+    "permeable_pavement_infiltration",
+    "permeable_pavement_lined",
+    "infiltration_trench",
+    "swale_trench",
+    "infiltration_shaft",
+    "lined_detention",
+    "safe_conveyance"
+  ],
+  "evidence": [],
+  "raster_evidence": [],
+  "distance_evidence": [],
+  "derived_module_bases": [],
+  "combinations": [],
+  "ownership": null,
+  "muriel": {
+    "enabled": false,
+    "receptors": [],
+    "municipal_land": null,
+    "roads": null,
+    "usable_space": null,
+    "routes": null
+  },
+  "mode": "planning",
+  "planning": {
+    "surfaces": null,
+    "heat": null
+  },
+  "preparation": {
+    "enabled": true
+  }
+}

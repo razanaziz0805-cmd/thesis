@@ -15,9 +15,9 @@ class StageOnePlugin:
         self.iface.addToolBarIcon(self.action)
 
     def open(self):
-        from .stage1.gui import StageOneDialog
+        from .stage1.planning_gui import PlanningDialog
         if self.dialog is None:
-            self.dialog=StageOneDialog(self.iface,self.iface.mainWindow())
+            self.dialog=PlanningDialog(self.iface,self.iface.mainWindow())
         self.dialog.show(); self.dialog.raise_(); self.dialog.activateWindow()
 
     def unload(self):

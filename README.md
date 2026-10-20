@@ -2,13 +2,17 @@
 
 This repository implements the **first stage** of the thesis workflow: configurable flood-need maps, a preliminary infiltration-pathway map, **MURIEL public-space screening**, per-design opportunity maps, declared combination checks and ownership analysis. It produces a portable QGIS project, a GeoPackage with feature-level explanations, audit tables, CSV registers, PNG sheets and PDF atlases.
 
-**Current status (v0.4):** implemented and tested on synthetic inputs, with preparation additionally exercised on supplied soil/profile/heat GIS data. A complete registered flood/suitability input set remains outstanding. The example atlas is a software demonstration, not a thesis finding. The thesis was read as research material. Schwerdorf's original MURIEL presentation was retrieved and slides 19–20 checked; other technical/regulatory references still require primary-source verification.
+**Current status (v0.5):** implemented and tested on synthetic inputs, with preparation additionally exercised on supplied soil/profile/heat GIS data. A complete registered flood/suitability input set remains outstanding. The example atlas is a software demonstration, not a thesis finding. The thesis was read as research material. Schwerdorf's original MURIEL presentation was retrieved and slides 19–20 checked; other technical/regulatory references still require primary-source verification.
 
 The real-data configuration is [config/koeln_kalk_sri5.json](config/koeln_kalk_sri5.json): **SRI5**, **30-year return period as stated by the user**, flood input in **centimetres**, intervention threshold **≥10 cm**. Confirm the SRI/event definition against the flood provider's metadata. An SRI number is not treated as a universal return-period conversion.
 
+## Start with two spatial datasets
+
+The default **planning mode** needs only a flood-depth map and study boundary. It produces connected flood action areas and a delivery/investigation register. Add one surface layer for five NbS investigation maps; ownership and heat are optional refinements. Retained concepts stay **CONDITIONAL** until designed and qualified. The original 15-variant engineering engine, MURIEL and declared physical combinations remain available under **Advanced**. See [the small-input planning guide and input table](docs/PLANNING.md).
+
 ## Guided QGIS setup
 
-Install [the QGIS plugin ZIP](downloads/nbs-stage1-plugin-v0.4.zip) through **Plugins → Manage and Install Plugins → Install from ZIP**. Then open **Plugins → NbS planning → NbS Stage 1 · opportunity mapping**. Select inputs, adjust the threshold, check readiness and run. The engine is bundled; no repository path or JSON editing is needed for guided setup. See the [step-by-step user guide](docs/USER_GUIDE.md).
+Install [the QGIS plugin ZIP](downloads/nbs-stage1-plugin-v0.5.zip) through **Plugins → Manage and Install Plugins → Install from ZIP**. Then open **Plugins → NbS planning → NbS Stage 1 · opportunity mapping**. Keep Planning opportunities selected, choose the two inputs, add optional context, check readiness and run. The engine is bundled; no repository path or JSON editing is needed for guided setup. See the [step-by-step user guide](docs/USER_GUIDE.md).
 
 Version 0.3 adds grouped input checks, progress and cancellation, fast analysis without map printing, isolated unfinished runs, a searchable offline results dashboard and an evidence task register. Registered configurations preserve advanced evidence/combinations; the panel can copy them for a new threshold run. Spatial joins reuse coverage unions; MURIEL searches use indexed candidate filtering with exact geometry distances. Reasons, references and conservative missing-data treatment are preserved.
 
@@ -23,14 +27,16 @@ cd /workspace/thesis
 bash scripts/check_environment.sh
 bash scripts/test.sh
 QT_QPA_PLATFORM=offscreen XDG_CACHE_HOME=/tmp/thesis-qgis-cache \
-  /usr/bin/python3 -m stage1 demo --muriel --directory outputs/my-first-demo
+  /usr/bin/python3 -m stage1 demo --planning --directory outputs/my-first-demo
 ```
 
 Each run requires a new output directory and preserves previous results. Open `outputs/my-first-demo/results/report.html`, or load `stage1.qgz` in QGIS. Choose a **map theme** to switch maps. Use **Identify Features** on the selected spatial layer and expand `explanation`: every rule reports the observed value, expected condition, status, citation, source locator/link, evidence reference, responsible party and closure action. The `decision_audit` table contains one row per rule evaluation.
 
-The MURIEL demonstration produces **five dedicated map sheets**, `muriel_atlas.pdf`, a 23-sheet full Stage 1 atlas and decision/connection registers. Read [docs/MURIEL.md](docs/MURIEL.md) for the screening sequence and the distinction between the original presentation's >30 cm depth mask and the thesis's maximum-depth wording. Both footprint modes are implemented and explicitly registered.
+The separate `demo --muriel` demonstration produces **five dedicated map sheets**, `muriel_atlas.pdf`, a 23-sheet full Stage 1 atlas and decision/connection registers. Read [docs/MURIEL.md](docs/MURIEL.md) for the screening sequence and the distinction between the original presentation's >30 cm depth mask and the thesis's maximum-depth wording. Both footprint modes are implemented and explicitly registered.
 
 ## Use real data
+
+For the first planning run, use the [planning template](config/planning.example.json) or guided panel. The following detailed evidence steps apply when qualifying actual designs; they are not prerequisites for the first planning maps.
 
 1. Supply the SRI5 flood-depth raster and study-area polygon. A nonoverlapping polygon/grid layer with depth attributes is also supported. See [the input specification](docs/INPUTS.md).
 2. Copy the real-data configuration to a new run configuration. Set paths, source metadata, scenario, units, output directory and confirmed vertical datum. Keep `profile_reviewed=false` until primary sources and local conditions have been checked.
@@ -82,8 +88,8 @@ The sequence, schema, rule audit and cartography are transferable. Rainfall, gro
 
 **Stages 2 and 3 are not implemented.** Stage 2 will assess effects in Scenarify. Stage 3 will compare verified flood outcomes and lifecycle cost; the thesis currently treats heat as a separately reported co-benefit, while the user's proposed heat objective remains a decision for Stage 3. No Scenarify-ready hydraulic parameters, flood-reduction estimates, heat reductions, costs or Pareto results are invented by this stage.
 
-The next data needed are listed in [docs/data_request.csv](docs/data_request.csv). Real groundwater admissibility cannot be established from a citywide average or an undated groundwater-depth image.
+Start with the [short planning input table](docs/PLANNING.md). The [detailed data-request register](docs/data_request.csv) is for subsequent engineering qualification. Real groundwater admissibility cannot be established from a citywide average or an undated groundwater-depth image.
 
 ## Download the prepared demonstration
 
-The [downloads folder](downloads/README.md) contains the full PDF atlas, five-sheet MURIEL atlas, portable QGIS ZIP package, decision register and PNG preview. Use GitHub’s **Download raw file** button on each file, or **Code → Download ZIP** for the entire repository. The files are stored with the repository and do not depend on chat download links.
+The [downloads folder](downloads/README.md) contains the v0.5 planning plugin, complete example/workflow ZIP, ten-sheet planning atlas and previews, alongside the earlier MURIEL examples. Use GitHub’s **Download raw file** button on each file, or **Code → Download ZIP** for the entire repository. The files are stored with the repository and do not depend on chat download links.

@@ -1,5 +1,7 @@
 # Method, rule provenance and release limits
 
+The default v0.5 panel uses [Phase C planning mode](PLANNING.md), with two required spatial datasets and five conditional concept families. The detailed admissibility, design and combination rules below describe **advanced engineering qualification**; they are retained for Phase D rather than required to start the first planning map.
+
 ## Thesis basis
 
 Read the supplied DOCX text, tables, and the two large embedded methodology/regulatory diagrams. Source file SHA-256:

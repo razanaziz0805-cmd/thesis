@@ -274,6 +274,8 @@ class StageOneDialog(QDialog):
         config['run_id']=slug+'_'+self.token
         config['preparation']={'enabled':self.auto_prepare.isChecked()}
         config['stated_return_period_years']=self.period.value() or None
+        if getattr(self, 'mode', None) is not None and self.mode.currentData() == 'planning':
+            return config
         config['groundwater_scenario_id']=self.gw_state.text().strip()
         config['vertical_datum']=self.datum.text().strip() or None
         config['policy'].update(profile_reviewed=self.profile_reviewed.isChecked(),profile_review_ref=self.profile_reference.text().strip() or None)

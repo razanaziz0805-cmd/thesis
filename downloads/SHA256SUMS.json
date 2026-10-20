@@ -11,6 +11,10 @@
     "bytes": 1403621,
     "sha256": "ab8749dc9049713a08c4217046347869e143d8a516533f9f8d95e4cfd6a93223"
   },
+  "nbs-stage1-planning-v0.5.zip": {
+    "bytes": 4939021,
+    "sha256": "6d342a0cee91bcb40b6269e72c1af1d39a522b53800b4cf21042cbbab9456ec6"
+  },
   "nbs-stage1-plugin-v0.3.zip": {
     "bytes": 86082,
     "sha256": "b844f1af7350e1f2b624760efedda87bb6dcc79127194d1c31f0f3b5739b45c8"
@@ -19,9 +23,29 @@
     "bytes": 114125,
     "sha256": "f9d2cef82f33e477d5ab15356d978c2282a8b357c7e3b46a6f4126e8f6dadad8"
   },
+  "nbs-stage1-plugin-v0.5.zip": {
+    "bytes": 139303,
+    "sha256": "045378eaedc4c6d02752ad324d82fad087e0fa153a92d4a8d2c3a32d866e1eda"
+  },
   "nbs-stage1-qgis.zip": {
     "bytes": 12066172,
     "sha256": "def5a21b0b78a3926581ce22ed679fc18f19f41d2e7426464fed48a2ba72d9a2"
+  },
+  "planning-interface-preview.png": {
+    "bytes": 117448,
+    "sha256": "36ba08cbe57c39e53ba052f0b49ec16f0f554b475c286f8a223b23809209b242"
+  },
+  "planning-map-preview.png": {
+    "bytes": 198176,
+    "sha256": "2041a74949e3e690ce2629456d74cbbaa21a79440e516e83f20e8bc040d7443a"
+  },
+  "planning-report-preview.png": {
+    "bytes": 144483,
+    "sha256": "4013ada30b62a4fab7b8a113a5fe83fc405099046f073d0aa175aef76a71bc01"
+  },
+  "planning-shortlist.csv": {
+    "bytes": 3455,
+    "sha256": "ce75bf12939818826fc27d9cafd7be3e639651805c2675810b112f81b33d58e3"
   },
   "preparation-panel-preview.png": {
     "bytes": 117769,
@@ -38,5 +62,9 @@
   "stage1-atlas-including-muriel.pdf": {
     "bytes": 5341118,
     "sha256": "09d2f6a9b07c8fee5d8c1b01006446ba5ba60a69b3e52c84e4d65e3d628123c1"
+  },
+  "stage1-planning-atlas.pdf": {
+    "bytes": 2360427,
+    "sha256": "2173fbbd8c129b38d28530bba61885835b632e7f3dbc989aef1529317f8ca21d"
   }
 }

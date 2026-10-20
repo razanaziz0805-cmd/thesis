@@ -14,6 +14,9 @@ def input_specs(config):
     for role in ('evidence', 'raster_evidence', 'distance_evidence'):
         for i, spec in enumerate(config.get(role, [])):
             yield f'{role}[{i}]', spec
+    for role in ('surfaces', 'heat', 'restrictions'):
+        if (config.get('planning') or {}).get(role):
+            yield 'planning.' + role, config['planning'][role]
     m = config.get('muriel') or {}
     if m.get('enabled') is True:
         for i, spec in enumerate(m.get('receptors', [])):
@@ -39,6 +42,22 @@ def structure_errors(config):
     if not isinstance(config, dict):
         return ['Configuration must be a JSON object.']
     errors = []
+    if config.get('mode', 'engineering') not in ('planning', 'engineering'):
+        errors.append('mode: select planning or engineering.')
+    planning = config.get('planning') or {}
+    if not isinstance(planning, dict):
+        errors.append('planning: expected an object.')
+    else:
+        for role in ('surfaces', 'heat', 'restrictions'):
+            spec = planning.get(role)
+            if spec and (not isinstance(spec, dict) or not spec.get('class_field') or not isinstance(spec.get('mapping'), dict) or not spec['mapping']):
+                errors.append(f'planning.{role}: select a category field and supply an explicit value mapping.')
+            elif spec:
+                allowed = {'roof', 'open_space', 'verge', 'pavement', 'parking', 'footway', 'unknown'} if role == 'surfaces' else {'priority', 'other', 'unknown'} if role == 'heat' else {'infiltration_excluded', 'unknown'}
+                if any(not isinstance(value, str) or value not in allowed for value in spec['mapping'].values()):
+                    errors.append(f'planning.{role}: unsupported mapped category.')
+    if config.get('mode') == 'planning' and config.get('combinations'):
+        errors.append('Planning mode exports concept options; registered physical combinations require engineering mode.')
     for key in ('run_id', 'area_label', 'scenario_id', 'groundwater_scenario_id', 'output_dir'):
         if not isinstance(config.get(key), str) or not config[key].strip():
             errors.append(f'{key}: enter a nonempty value.')
@@ -126,3 +145,11 @@ def starter_config(flood=None, study_area=None, output_dir='results', area_label
             'derived_module_bases': [], 'combinations': [], 'ownership': None,
             'muriel': {'enabled': True, 'receptors': [], 'municipal_land': None,
                        'roads': None, 'usable_space': None, 'routes': None}}
+
+
+def planning_config(**kwargs):
+    """Two required spatial inputs; detailed design proof is collected later."""
+    config = starter_config(**kwargs)
+    config.update(mode='planning', planning={'surfaces': None, 'heat': None, 'restrictions': None})
+    config['muriel']['enabled'] = False
+    return config
