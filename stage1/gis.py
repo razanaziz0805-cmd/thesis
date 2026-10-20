@@ -269,9 +269,11 @@ def read_units(config, crs, control=None):
                 value = number(v)
                 if value is None or value < 0 or (nodata is not None and (v == nodata or (math.isnan(nodata) and math.isnan(v)))):
                     value = None
-                units.append({"geometry": geom, "attrs": {"unit_id": f"r{row:07d}_c{col:07d}", "grid_row": row, "grid_col": col, "flood_depth_m": None if value is None else value * factor}})
+                id_row,id_col=config.get('unit_id_grid_offset',[0,0])
+                units.append({"geometry": geom, "attrs": {"unit_id": f"r{row+id_row:07d}_c{col+id_col:07d}", "grid_row": row, "grid_col": col, "flood_depth_m": None if value is None else value * factor}})
         grid = {"type": "raster_cells", "geotransform": gt, "width": ds.RasterXSize, "height": ds.RasterYSize,
-                "pixel_size_m": [gt[1], abs(gt[5])], "depth_units": flood["units"], "nodata": nodata, "resampling": "none"}
+                "pixel_size_m": [gt[1], abs(gt[5])], "depth_units": flood["units"], "nodata": 'NaN' if nodata is not None and math.isnan(nodata) else nodata, "resampling": "none",
+                "source_index_offset":config.get('unit_id_grid_offset',[0,0])}
         ds = None
     else:
         raise ValueError("flood.type must be raster or vector")
@@ -570,6 +572,14 @@ def run(config_path, export_maps=True, progress=None, cancelled=None):
     out = Path(config['output_dir'])
     if out.exists():
         raise ValueError(f'Output directory already exists: {out}. Use a new run_id/output path to preserve earlier runs.')
+    if (config.get('preparation') or {}).get('enabled') is True:
+        from .preparation import prepare_run
+        from .preflight import inspect_config
+        original_progress=progress
+        config_path=prepare_run(config_path,progress=(lambda p,m: original_progress(p*.2,m)) if original_progress else None,cancelled=cancelled)
+        checked=inspect_config(config_path)
+        if not checked.ok:raise ValueError(checked.text())
+        progress=(lambda p,m: original_progress(20+p*.8,m)) if original_progress else None
     control = RunControl(progress, cancelled)
     control.update(0, 'Checking configuration')
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -753,6 +763,7 @@ def _run(config_path, export_maps, control, out):
                     'Ownership does not establish land rights; private land is not automatically rejected.',
                 ]}
     manifest['muriel'] = muriel['summary'] if muriel else {'enabled': False}
+    manifest['preparation']=config.get('preparation') or {'enabled':False}
     if config.get('demo'):
         manifest['limitations'].insert(0, 'ALL INPUTS, EVIDENCE AND AUTHORITY DECISIONS ARE SYNTHETIC. NOT KÖLN-KALK FINDINGS.')
     (out / 'run_manifest.json').write_text(json.dumps(manifest, indent=2, ensure_ascii=False))

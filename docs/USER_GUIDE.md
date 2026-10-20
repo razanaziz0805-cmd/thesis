@@ -4,11 +4,15 @@ Use QGIS **3.40 or newer**. The release is tested on QGIS 3.40.6. It runs locall
 
 ## Install the panel
 
-1. Download `nbs-stage1-plugin-v0.3.zip` from this repository's `downloads` folder. On GitHub, open the file and select **Download raw file**. Keep this ZIP intact.
+1. Download `nbs-stage1-plugin-v0.4.zip` from this repository's `downloads` folder. On GitHub, open the file and select **Download raw file**. Keep this ZIP intact.
 2. In QGIS, choose **Plugins → Manage and Install Plugins → Install from ZIP**, select the ZIP, and install it.
 3. Enable **NbS Stage 1 Opportunity Mapping** if necessary. Open **Plugins → NbS planning → NbS Stage 1 · opportunity mapping**.
 
 The package includes its engine. You do not have to select a repository folder. The existing Processing script remains available for graphical models and batch work.
+
+## Prepare your inputs
+
+Click **Prepare GIS data…** for CRS correction/confirmation, clipping, grid choices and a separate input-review project. See [the preparation guide](PREPARATION.md). New guided screening runs also prepare registered inputs on the native flood grid by default.
 
 ## First real run
 

@@ -22,6 +22,10 @@ def main(argv=None):
     validate.add_argument('--json', action='store_true', help='Machine-readable validation result')
     init = sub.add_parser('init', help='Create a starter configuration without overwriting a file')
     init.add_argument('config')
+    inventory=sub.add_parser('inventory',help='Inspect GIS files and missing components without altering sources')
+    inventory.add_argument('files',nargs='+');inventory.add_argument('--output',default=None)
+    prep=sub.add_parser('prepare',help='Reproject, clip and align inputs using a documented preparation job')
+    prep.add_argument('config')
     sub.add_parser('gui', help='Open guided desktop setup using the QGIS Python environment')
     args = parser.parse_args(argv)
     try:
@@ -38,6 +42,15 @@ def main(argv=None):
         from qgis.core import QgsApplication
         app = QgsApplication.instance() or QgsApplication([], args.command == 'gui')
         app.initQgis()
+        if args.command=='inventory':
+            from .inventory import inspect_paths
+            result=inspect_paths(args.files,args.output)
+            print(json.dumps(result,indent=2,ensure_ascii=False))
+            return 0 if all(r['status']=='READABLE' for r in result) else 2
+        if args.command=='prepare':
+            from .preparation import prepare
+            print(prepare(args.config,progress=lambda p,m:print(f'[{p:.0f}%] {m}',file=sys.stderr,flush=True)))
+            return 0
         if args.command == 'gui':
             from .gui import StageOneDialog
             dialog = StageOneDialog()

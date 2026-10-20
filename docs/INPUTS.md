@@ -1,5 +1,7 @@
 # Stage 1 input specification
 
+Version 0.4 can prepare saved inputs before screening. See [automatic preparation](PREPARATION.md) for CRS corrections, clipping and grid alignment. The specifications below describe the prepared analysis inputs.
+
 ## Minimum to produce an actual first map
 
 Supply a **georeferenced SRI5 flood-depth GeoTIFF** and a **study-area polygon** (GeoPackage preferred). The user specifies centimetres and a stated 30-year return period. Preserve the provider's scenario/event documentation, date, resolution, depth-band definition, licence and NoData code. A screenshot or WMS picture alone does not supply numeric depth values per cell. A documented WCS/download or vector depth field can be used instead.

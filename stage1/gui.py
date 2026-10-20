@@ -137,6 +137,8 @@ class StageOneDialog(QDialog):
         browse = QPushButton('Browse…'); browse.clicked.connect(self.choose_folder)
         folder_layout.addWidget(self.folder); folder_layout.addWidget(browse)
         self.input_form.addRow('Workspace folder · required',folder)
+        self.auto_prepare=QCheckBox('Automatically reproject, clip and align inputs to the native flood grid')
+        self.auto_prepare.setChecked(True);self.input_form.addRow(self.auto_prepare)
         self.input_form.addRow(self.note('Flood maps must contain numeric depths. Default processing CRS: EPSG:25832. The SRI/return-period relationship needs provider confirmation.'))
         self.designs = QListWidget(); self.designs.setMinimumHeight(145)
         for design, values in DESIGNS.items():
@@ -187,6 +189,7 @@ class StageOneDialog(QDialog):
         self.progress=QProgressBar(); self.progress.setRange(0,100); outer.addWidget(self.progress)
         self.status=QLabel('Ready for input selection'); outer.addWidget(self.status)
         actions=QHBoxLayout(); self.check_button=QPushButton('Check inputs'); self.check_button.clicked.connect(self.check_inputs)
+        self.prepare_button=QPushButton('Prepare GIS data…');self.prepare_button.clicked.connect(self.prepare_inputs);actions.addWidget(self.prepare_button)
         self.run_button=QPushButton('Run Stage 1'); self.run_button.clicked.connect(self.start_run)
         self.cancel_button=QPushButton('Cancel run'); self.cancel_button.setEnabled(False); self.cancel_button.clicked.connect(self.request_cancel)
         actions.addWidget(self.check_button); actions.addWidget(self.run_button); actions.addWidget(self.cancel_button); outer.addLayout(actions)
@@ -194,6 +197,10 @@ class StageOneDialog(QDialog):
     @staticmethod
     def new_token():
         return datetime.now().strftime('%Y%m%d_%H%M%S')+'_'+uuid4().hex[:6]
+
+    def prepare_inputs(self):
+        from .preparation_gui import PreparationDialog
+        PreparationDialog(self).exec_()
 
     @staticmethod
     def note(text):
@@ -265,6 +272,7 @@ class StageOneDialog(QDialog):
         workspace=Path(self.folder.text()).expanduser().resolve()
         config=starter_config(flood=flood,study_area=self.boundary.spec(),output_dir=workspace/'runs'/(slug+'_'+self.token),area_label=self.area.text().strip(),scenario=self.scenario.text().strip(),threshold_cm=self.threshold.value())
         config['run_id']=slug+'_'+self.token
+        config['preparation']={'enabled':self.auto_prepare.isChecked()}
         config['stated_return_period_years']=self.period.value() or None
         config['groundwater_scenario_id']=self.gw_state.text().strip()
         config['vertical_datum']=self.datum.text().strip() or None
@@ -331,7 +339,7 @@ class StageOneDialog(QDialog):
                 self.messages.setPlainText(f'Cannot save the run configuration: {exc}'); return
         self.running=True; self.cancelled=False; self.progress.setValue(0)
         self.report_button.setEnabled(False); self.folder_button.setEnabled(False)
-        for widget in (self.check_button,self.run_button,self.open_config,self.new_button,self.input_page,self.evidence_page,self.export_maps,self.duplicate_button): widget.setEnabled(False)
+        for widget in (self.check_button,self.run_button,self.open_config,self.new_button,self.input_page,self.evidence_page,self.export_maps,self.duplicate_button,self.prepare_button): widget.setEnabled(False)
         self.cancel_button.setEnabled(True)
         QTimer.singleShot(0,lambda: self.execute_run(source))
 
@@ -355,7 +363,7 @@ class StageOneDialog(QDialog):
             self.token=self.new_token()
         finally:
             self.running=False; self.cancel_button.setEnabled(False)
-            for widget in (self.check_button,self.run_button,self.open_config,self.new_button,self.export_maps): widget.setEnabled(True)
+            for widget in (self.check_button,self.run_button,self.open_config,self.new_button,self.export_maps,self.prepare_button): widget.setEnabled(True)
             self.input_page.setEnabled(self.loaded_path is None); self.evidence_page.setEnabled(self.loaded_path is None)
             self.duplicate_button.setEnabled(self.loaded_path is not None)
 

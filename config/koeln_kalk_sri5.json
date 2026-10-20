@@ -8,7 +8,7 @@
   "groundwater_scenario_id": "HIGH_GROUNDWATER_TO_BE_DOCUMENTED",
   "crs": "EPSG:25832",
   "vertical_datum": null,
-  "flood_threshold_m": 0.10,
+  "flood_threshold_m": 0.1,
   "max_units": 250000,
   "flood": {
     "path": "../data/flood_sri5_cm.tif",
@@ -53,10 +53,21 @@
     "asset_clearance_m": 1.0
   },
   "designs": [
-    "green_roof", "blue_green_roof", "surface_infiltration", "swale_infiltration",
-    "rain_garden_infiltration", "rain_garden_lined", "tree_trench_infiltration",
-    "tree_trench_lined", "permeable_pavement_infiltration", "permeable_pavement_lined",
-    "infiltration_trench", "swale_trench", "infiltration_shaft", "lined_detention", "safe_conveyance"
+    "green_roof",
+    "blue_green_roof",
+    "surface_infiltration",
+    "swale_infiltration",
+    "rain_garden_infiltration",
+    "rain_garden_lined",
+    "tree_trench_infiltration",
+    "tree_trench_lined",
+    "permeable_pavement_infiltration",
+    "permeable_pavement_lined",
+    "infiltration_trench",
+    "swale_trench",
+    "infiltration_shaft",
+    "lined_detention",
+    "safe_conveyance"
   ],
   "combinations": [],
   "muriel": {
@@ -65,11 +76,11 @@
       "footprint_mode": "depth_mask",
       "flood_extent_depth_m": 0.0,
       "min_area_m2": 2000.0,
-      "min_max_depth_m": 0.30,
+      "min_max_depth_m": 0.3,
       "receptor_distance_m": 1.0,
       "municipal_distance_m": 50.0,
       "destination_distance_m": 100.0,
-      "protect_overlap_fraction": 0.70
+      "protect_overlap_fraction": 0.7
     },
     "receptors": [],
     "municipal_land": null,
@@ -77,5 +88,10 @@
     "usable_space": null,
     "routes": null
   },
-  "output_dir": "../outputs/KALK_SRI5_10CM_V001"
+  "output_dir": "../outputs/KALK_SRI5_10CM_V001",
+  "preparation": {
+    "enabled": true,
+    "search_buffer_m": 100,
+    "grid": {}
+  }
 }

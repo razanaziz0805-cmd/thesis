@@ -43,6 +43,12 @@ def inspect_config(source, base_dir=None):
     if errors:
         return result
     config = resolve_config(data, base_dir or (Path(source).resolve().parent if not isinstance(source, dict) else None))
+    if (config.get('preparation') or {}).get('enabled') is True:
+        from .preparation import check_run_sources
+        for level,role,message,action in check_run_sources(config):result.add(level,role,message,action)
+        result.facts['Preparation']='Enabled: source checks now; full field/grid checks after documented preparation.'
+        result.facts['Output folder']=config['output_dir']
+        return result
     from osgeo import gdal
     from qgis.core import Qgis, QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject, QgsVectorLayer, QgsWkbTypes
     crs = QgsCoordinateReferenceSystem(config.get('crs', 'EPSG:25832'))

@@ -40,7 +40,7 @@ class PluginPackageTests(unittest.TestCase):
                 self.assertTrue(plugin.dialog.isVisible())
                 from nbs_stage1.stage1.demo import create_demo
                 source=create_demo(tmp/'bundled-demo')
-                config=json.loads(source.read_text());config.update(designs=['green_roof'],combinations=[]);source.write_text(json.dumps(config))
+                config=json.loads(source.read_text());config.update(designs=['green_roof'],combinations=[],preparation={'enabled':True});source.write_text(json.dumps(config))
                 sentinel=QgsVectorLayer('Polygon?crs=EPSG:25832','unsaved project','memory');QgsProject.instance().addMapLayer(sentinel);sid=sentinel.id()
                 plugin.dialog.use_configuration(source);plugin.dialog.export_maps.setChecked(False)
                 plugin.dialog.start_run();app.processEvents()

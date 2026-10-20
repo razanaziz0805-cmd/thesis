@@ -1,0 +1,13 @@
+{
+  "target_crs": "EPSG:25832",
+  "output_dir": "../outputs/prepared_site_v001",
+  "search_buffer_m": 100,
+  "study_area": {"path": "../data/site.gpkg", "layer": "study_area"},
+  "grid": {"master": {"path": "../data/flood_sri5_cm.tif"}},
+  "datasets": [
+    {"id": "flood", "type": "raster", "path": "../data/flood_sri5_cm.tif", "kind": "flood_depth", "units": "cm", "resampling": "near"},
+    {"id": "soil_context", "type": "raster", "path": "../data/soil_context.tif", "kind": "continuous", "resampling": "near"},
+    {"id": "ownership", "type": "vector", "path": "../data/site.gpkg", "layer": "ownership"},
+    {"id": "sensitive_objects", "type": "vector", "path": "../data/site.gpkg", "layer": "sensitive_object_footprints"}
+  ]
+}

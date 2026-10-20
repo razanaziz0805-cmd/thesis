@@ -88,6 +88,11 @@ def structure_errors(config):
         for role, spec in input_specs(config):
             if not isinstance(spec, dict) or not isinstance(spec.get('path'), str) or not spec['path'].strip():
                 errors.append(f'{role}: select a saved input file.')
+    preparation=config.get('preparation') or {}
+    if not isinstance(preparation,dict):errors.append('preparation: expected an object.')
+    elif 'enabled' in preparation and not isinstance(preparation['enabled'],bool):errors.append('preparation.enabled: use true or false.')
+    offset=config.get('unit_id_grid_offset',[0,0])
+    if not isinstance(offset,list) or len(offset)!=2 or any(isinstance(v,bool) or not isinstance(v,int) for v in offset):errors.append('unit_id_grid_offset: expected two integer source-grid offsets.')
     return errors
 
 
@@ -102,6 +107,8 @@ def resolve_config(source, base_dir=None):
     for _, spec in input_specs(config):
         spec['path'] = str((base / spec['path']).resolve())
     config['output_dir'] = str((base / config['output_dir']).resolve())
+    if (config.get('preparation') or {}).get('output_dir'):
+        config['preparation']['output_dir']=str((base/config['preparation']['output_dir']).resolve())
     return config
 
 

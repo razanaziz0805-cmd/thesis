@@ -4,31 +4,39 @@
     "sha256": "5bfb140fa757eda3e82b7bd36dea3fefcdade92d717efee37e5c97bd50c5c9f8"
   },
   "muriel-priority-preview.png": {
-    "bytes": 278863,
-    "sha256": "1b133078b9f9377da43acf2406b1b3d23be9edf5297f1e1d6b27579de9325e55"
+    "bytes": 278846,
+    "sha256": "2baaede0fb83d7abd3d9376d53d835adda6a6419c1a096e036779f9e4ec3a7e9"
   },
   "muriel-screening-atlas.pdf": {
-    "bytes": 1403575,
-    "sha256": "357961d956282020d3b925c18e42104ca085b11a434bdf35f6e9c604cceea603"
+    "bytes": 1403621,
+    "sha256": "ab8749dc9049713a08c4217046347869e143d8a516533f9f8d95e4cfd6a93223"
   },
   "nbs-stage1-plugin-v0.3.zip": {
     "bytes": 86082,
     "sha256": "b844f1af7350e1f2b624760efedda87bb6dcc79127194d1c31f0f3b5739b45c8"
   },
+  "nbs-stage1-plugin-v0.4.zip": {
+    "bytes": 114125,
+    "sha256": "f9d2cef82f33e477d5ab15356d978c2282a8b357c7e3b46a6f4126e8f6dadad8"
+  },
   "nbs-stage1-qgis.zip": {
-    "bytes": 11977296,
-    "sha256": "b083d45f406d9a7a9ff13f3ddaf8ae8f0f4261db5599f1a4ab2e4b43e84e8077"
+    "bytes": 12066172,
+    "sha256": "def5a21b0b78a3926581ce22ed679fc18f19f41d2e7426464fed48a2ba72d9a2"
+  },
+  "preparation-panel-preview.png": {
+    "bytes": 117769,
+    "sha256": "ba5bfed6b58ad881c1301f8eeaaf7ff5a2e5a367368ab490bd93a0205e1304df"
   },
   "qgis-setup-preview.png": {
-    "bytes": 119380,
-    "sha256": "9201c5cd4620adbdc1a6accdb45c5ede9d4da4a1a6bd1c799788745d6b94140b"
+    "bytes": 124269,
+    "sha256": "d2109d832c50b88441a7503a88c7b9059aaea328f792a44ed9ea406f0bca2203"
   },
   "results-dashboard-preview.png": {
     "bytes": 128554,
     "sha256": "1441b1912e7fa352d36e8f90f1f92d2423f850b9c9628b259020daf3c2651d7e"
   },
   "stage1-atlas-including-muriel.pdf": {
-    "bytes": 5341178,
-    "sha256": "ed6fac762d3ffc26ae8d32ed6839fa85fed303eb08caa34f825ffc387dd91e3d"
+    "bytes": 5341118,
+    "sha256": "09d2f6a9b07c8fee5d8c1b01006446ba5ba60a69b3e52c84e4d65e3d628123c1"
   }
 }
