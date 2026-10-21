@@ -33,7 +33,7 @@ def create_report(out, config, layers, manifest, exported, audit):
         with (out/'evidence_tasks.csv').open('w',encoding='utf-8',newline='') as file:
             writer=csv.DictWriter(file,fieldnames=list(tasks[0])); writer.writeheader(); writer.writerows(tasks)
     demo=bool(config.get('demo'))
-    banner='SYNTHETIC DEMONSTRATION — NOT KÖLN-KALK RESULTS' if demo else 'SPATIAL SCREENING — review evidence before design decisions'
+    banner='SYNTHETIC DEMONSTRATION — NOT REAL STUDY-AREA RESULTS' if demo else 'SPATIAL SCREENING — review evidence before design decisions'
     need=counts.get('intervention_need',{})
     cards=[('Analysis units',manifest['unit_count']),('Depth meets intervention threshold',need.get('YES',0)),('Unknown flood depths',need.get('UNKNOWN',0))]
     if manifest.get('muriel',{}).get('enabled'):

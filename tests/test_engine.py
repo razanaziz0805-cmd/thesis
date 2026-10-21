@@ -2,7 +2,7 @@ import copy
 import math
 import unittest
 
-from stage1.catalogue import DEFAULT_POLICY
+from stage1.catalogue import KOELN_POLICY as DEFAULT_POLICY
 from stage1.engine import Decision, aggregate, evaluate_combination, evaluate_design, groundwater, intervention_need, validate_policy
 
 
@@ -133,7 +133,7 @@ class GroundwaterTests(unittest.TestCase):
 
     def test_profile_transfers_require_review(self):
         with self.assertRaises(ValueError):
-            validate_policy({'municipality': 'Essen'})
+            validate_policy({**DEFAULT_POLICY, 'municipality': 'Essen'})
 
     def test_text_none_is_unknown_not_outside_protection(self):
         a = gw_evidence()

@@ -1,4 +1,4 @@
-# Planning with a small input set · v0.5
+# Planning with a small input set · v0.6
 
 Start with **two spatial datasets**: the study boundary and a numeric, scenario-labelled flood-depth map. Detailed engineering evidence is collected when an opportunity becomes a physical module. This implements the thesis's distinction between spatial opportunity, modelled performance and design/permission feasibility (§5.1; §§5.5–5.6).
 
@@ -72,4 +72,4 @@ The current cap remains **250,000 source units**; this is not a tiled NRW-wide r
 | §5.7.4 | Heat context separate from hydraulic performance |
 | §§5.6–5.7 | Detailed qualification, simulation and portfolio comparison remain subsequent decisions |
 
-Cologne's technical values are local. For another NRW municipality, register its event and source metadata and replace/review the local policy; do not transplant Köln requirements as statewide standards. The attached thesis supplies research evidence, not executable instructions. Stage 2 Scenarify and Stage 3 optimisation remain outside this release.
+The default project is generic. Register the actual event, units, suitable projected CRS and local policy for any study area; see [TRANSFERABILITY.md](TRANSFERABILITY.md). No city's technical values are universal. The attached thesis supplies research evidence, not executable instructions. Stage 2 Scenarify and Stage 3 optimisation remain outside this release.

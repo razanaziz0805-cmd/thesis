@@ -4,7 +4,7 @@ Use QGIS **3.40 or newer**. The release is tested on QGIS 3.40.6. It runs locall
 
 ## Install the panel
 
-1. Download `nbs-stage1-plugin-v0.5.zip` from this repository's `downloads` folder. On GitHub, open the file and select **Download raw file**. Keep this ZIP intact.
+1. Download `nbs-stage1-plugin-v0.6.zip` from this repository's `downloads` folder. On GitHub, open the file and select **Download raw file**. Keep this ZIP intact.
 2. In QGIS, choose **Plugins → Manage and Install Plugins → Install from ZIP**, select the ZIP, and install it.
 3. Enable **NbS Stage 1 Opportunity Mapping** if necessary. Open **Plugins → NbS planning → NbS Stage 1 · opportunity mapping**.
 
@@ -16,7 +16,7 @@ Click **Prepare GIS data…** for CRS correction/confirmation, clipping, grid ch
 
 ## First real run
 
-1. Keep **Planning opportunities · start with two layers** selected. In Inputs, enter the study name and scenario. Defaults are SRI5, centimetre depths and a 10 cm intervention threshold. Confirm event metadata with the provider; the user-stated 30-year return period is not a universal SRI conversion.
+1. Keep **Planning opportunities · start with two layers** selected. In Inputs, enter the study name and scenario. Enter the actual provider event and units, then choose a suitable projected CRS in metres. No event, return period, CRS or city rules are assumed; the 10 cm project screen is configurable.
 2. Select the numeric flood map and study boundary, using saved GeoTIFF/GeoPackage files. Choose a raster band or vector depth/ID fields, a workspace and source details. Automatic preparation preserves the native flood grid by default.
 3. In **Optional planning context**, open only the sections you have: surface types, ownership or heat. Select each category field and map its exact source values. Leave unknown classes unmapped. No engineering checklist is required.
 4. Click **Check inputs**. Correct errors and review warnings. Missing optional data do not block flood action maps; they remain visible as unknown/conditional.
@@ -32,7 +32,7 @@ Configurations are saved in `workspace/configurations`; outputs are saved in dis
 
 The panel accepts a prepared polygon evidence layer using field names in [INPUTS.md](INPUTS.md). Raw soil maps, groundwater elevations or ownership do not by themselves establish all design approvals. Expert evidence remains necessary.
 
-Use **Open registered configuration…** for advanced workflows with multiple evidence layers, field mappings, aligned rasters, surveyed routes, local rule profiles or declared NbS combinations. This preserves those settings. If its output already exists, use **Copy registered configuration for a new threshold run…**: choose the new threshold and workspace. The original configuration and expert inputs are preserved, and the copied configuration can be run directly. The guided form uses the provisional Cologne profile; another municipality needs its own documented local review.
+Use **Open registered configuration…** for advanced workflows with multiple evidence layers, field mappings, aligned rasters, surveyed routes, local rule profiles or declared NbS combinations. This preserves those settings. If its output already exists, use **Copy registered configuration for a new threshold run…**: choose the new threshold and workspace. The original configuration and expert inputs are preserved, and the copied configuration can be run directly. The guided form defaults to generic unconfigured rules; load a cited local profile for the governing jurisdiction. See [TRANSFERABILITY.md](TRANSFERABILITY.md).
 
 ## Read the report
 

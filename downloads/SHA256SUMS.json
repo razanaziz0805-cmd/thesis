@@ -27,9 +27,17 @@
     "bytes": 139303,
     "sha256": "045378eaedc4c6d02752ad324d82fad087e0fa153a92d4a8d2c3a32d866e1eda"
   },
+  "nbs-stage1-plugin-v0.6.zip": {
+    "bytes": 155849,
+    "sha256": "762c007fa28d84b3ebd50c9b548546ccd6c2e41750c7a06443acc933d903211e"
+  },
   "nbs-stage1-qgis.zip": {
     "bytes": 12066172,
     "sha256": "def5a21b0b78a3926581ce22ed679fc18f19f41d2e7426464fed48a2ba72d9a2"
+  },
+  "nbs-stage1-transferable-v0.6.zip": {
+    "bytes": 4581622,
+    "sha256": "a721ae4536a52db9cd4b7432b4f8ad51b81635094ad066080c4f7da291cd9568"
   },
   "planning-interface-preview.png": {
     "bytes": 117448,
@@ -66,5 +74,21 @@
   "stage1-planning-atlas.pdf": {
     "bytes": 2360427,
     "sha256": "2173fbbd8c129b38d28530bba61885835b632e7f3dbc989aef1529317f8ca21d"
+  },
+  "stage1-transferable-atlas.pdf": {
+    "bytes": 2182548,
+    "sha256": "33150eb0116997e5c255f353ae10c23bdfe5c3185be9e163c6f3ed958c522dd5"
+  },
+  "transferable-interface-preview.png": {
+    "bytes": 143985,
+    "sha256": "0a02947fdf19ba55226f1ec64c9def3575dccf6d7cce7405d87cdfa7bb71ceba"
+  },
+  "transferable-map-preview.png": {
+    "bytes": 193357,
+    "sha256": "cb7b95c476813379c9d15d44abf5a9d21089c2446cf8bdfafec6feb7588ba6ef"
+  },
+  "transferable-report-preview.png": {
+    "bytes": 144141,
+    "sha256": "5c61b2d3abd57533a84f55bf43ff3afc242d5483b4af4ad02da2e4babe39d706"
   }
 }

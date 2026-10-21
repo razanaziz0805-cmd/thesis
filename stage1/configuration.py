@@ -3,8 +3,9 @@ from copy import deepcopy
 import json
 from pathlib import Path
 
-from .catalogue import DEFAULT_POLICY, DESIGNS
-from .engine import intervention_need, muriel_settings, validate_policy
+from .catalogue import DESIGNS, SOURCES
+from .profiles import place_key, profile_template
+from .engine import MURIEL_DEFAULTS, intervention_need, muriel_settings, validate_policy
 
 
 def input_specs(config):
@@ -62,10 +63,22 @@ def structure_errors(config):
         if not isinstance(config.get(key), str) or not config[key].strip():
             errors.append(f'{key}: enter a nonempty value.')
     if config.get('scenario_id') in ('UNKNOWN', 'REQUIRED'):
-        errors.append('scenario_id: register the actual flood scenario, for example SRI5.')
+        errors.append('scenario_id: register the actual provider event/scenario identifier.')
+    if config.get('stated_return_period_years') is not None:
+        from .engine import number
+        period = number(config['stated_return_period_years'])
+        if period is None or period <= 0:
+            errors.append('stated_return_period_years: use a positive finite value from event metadata, or null when unknown.')
+    if not isinstance(config.get('crs'),str) or not config['crs'].strip():
+        errors.append('crs: select a projected processing CRS in metres for this study area.')
     try:
         intervention_need(0, config.get('flood_threshold_m'))
-        validate_policy(config.get('policy') or {})
+        policy = validate_policy(config.get('policy') or {})
+        jurisdiction = config.get('jurisdiction',policy['municipality'])
+        if not isinstance(jurisdiction,str):
+            errors.append('jurisdiction: enter the governing rule area as text.')
+        elif policy['rule_scope'] and place_key(jurisdiction) != place_key(policy['rule_scope']):
+            errors.append('The study jurisdiction does not match the selected rule profile. Choose a local profile or generic planning rules.')
     except (ValueError, TypeError) as exc:
         errors.append(str(exc))
     maximum = config.get('max_units', 250000)
@@ -102,6 +115,12 @@ def structure_errors(config):
             muriel_settings(m.get('thresholds'))
         except (ValueError, TypeError) as exc:
             errors.append(str(exc))
+        for key in ('criteria_scope','criteria_adoption_ref','criteria_profile_id'):
+            if m.get(key) is not None and not isinstance(m[key],str):
+                errors.append(f'muriel.{key}: use text or null.')
+        source = m.get('criteria_source')
+        if source is not None and (not isinstance(source,dict) or any(not isinstance(source.get(k),str) or not source[k].strip() for k in ('citation','locator','status'))):
+            errors.append('muriel.criteria_source: provide citation, locator and verification status.')
     # Do not traverse malformed containers while gathering further errors.
     if not errors:
         for role, spec in input_specs(config):
@@ -122,6 +141,19 @@ def resolve_config(source, base_dir=None):
         raise ValueError('\n'.join(errors))
     base = Path(base_dir or (Path(source).resolve().parent if not isinstance(source, dict) else Path.cwd()))
     config['policy'] = validate_policy(config.get('policy') or {})
+    config.setdefault('jurisdiction',config['policy']['municipality'])
+    m = config.get('muriel') or {}
+    if m.get('enabled'):
+        settings = muriel_settings(m.get('thresholds'))
+        changed = any(settings[key] != value for key,value in MURIEL_DEFAULTS.items())
+        m.setdefault('criteria_profile_id','adapted_unregistered' if changed else 'porz_eil_2022_reference')
+        m.setdefault('criteria_scope',config['jurisdiction'])
+        m.setdefault('criteria_adoption_ref',None)
+        m.setdefault('criteria_source', {'citation':'Locally adapted MURIEL criteria; source registration outstanding',
+                                       'locator':'Resolved configuration muriel.thresholds', 'url':'', 'status':'unregistered_local_criteria'} if changed else deepcopy(SOURCES['MURIEL']))
+        m['criteria_source'].setdefault('url','')
+        m['criteria_scope_matches'] = bool(m['criteria_scope']) and place_key(m['criteria_scope']) == place_key(config['jurisdiction'])
+        config['muriel'] = m
     config['designs'] = config.get('designs', list(DESIGNS))
     for _, spec in input_specs(config):
         spec['path'] = str((base / spec['path']).resolve())
@@ -131,19 +163,25 @@ def resolve_config(source, base_dir=None):
     return config
 
 
-def starter_config(flood=None, study_area=None, output_dir='results', area_label='Köln-Kalk', scenario='SRI5', threshold_cm=10):
+def starter_config(flood=None, study_area=None, output_dir='results', area_label='Study area', scenario='REQUIRED', threshold_cm=10,
+                   crs='', jurisdiction='', profile='generic'):
     """No invented evidence or approvals in a new project."""
-    return {'run_id': 'KALK_SRI5_001', 'area_label': area_label, 'scenario_id': scenario,
+    policy = profile_template(profile)
+    if jurisdiction:
+        policy['municipality'] = jurisdiction
+    return {'schema_version':'0.6', 'run_id': 'STUDY_RUN_001', 'area_label': area_label, 'scenario_id': scenario,
             'scenario_description': 'Confirm the event definition against provider metadata.',
-            'stated_return_period_years': 30, 'return_period_source': 'User statement; provider confirmation required.',
+            'stated_return_period_years': None, 'return_period_source': None,
             'groundwater_scenario_id': 'UNKNOWN_DESIGN_GROUNDWATER', 'vertical_datum': None,
-            'crs': 'EPSG:25832', 'flood_threshold_m': float(threshold_cm) / 100,
-            'max_units': 250000, 'flood': flood or {'path': '', 'type': 'raster', 'units': 'cm', 'band': 1},
+            'crs': crs, 'jurisdiction':jurisdiction or policy['municipality'], 'flood_threshold_m': float(threshold_cm) / 100,
+            'flood_threshold_reference':'Project planning assumption; default 10 cm retained from original user specification; review for this area.',
+            'max_units': 250000, 'flood': flood or {'path': '', 'type': 'raster', 'units': None, 'band': 1},
             'study_area': study_area or {'path': ''}, 'output_dir': str(output_dir),
-            'policy': deepcopy(DEFAULT_POLICY), 'designs': list(DESIGNS),
+            'policy': policy, 'designs': list(DESIGNS),
             'evidence': [], 'raster_evidence': [], 'distance_evidence': [],
             'derived_module_bases': [], 'combinations': [], 'ownership': None,
-            'muriel': {'enabled': True, 'receptors': [], 'municipal_land': None,
+            'muriel': {'enabled': False, 'criteria_profile_id':'porz_eil_2022_reference', 'criteria_scope':jurisdiction or policy['municipality'],
+                       'criteria_adoption_ref':None, 'receptors': [], 'municipal_land': None,
                        'roads': None, 'usable_space': None, 'routes': None}}
 
 

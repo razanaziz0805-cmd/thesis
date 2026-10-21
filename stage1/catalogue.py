@@ -7,8 +7,8 @@ the other external references have not been independently verified here.
 
 SOURCES = {
     "USER_DEPTH": {
-        "citation": "User specification: intervention screening at flood depth ≥10 cm; configurable",
-        "locator": "Chat request, Stage 1", "url": "", "status": "user_defined_assumption",
+        "citation": "Registered project flood-need threshold; user-defined planning criterion",
+        "locator": "Resolved run configuration: flood_threshold_m and flood_threshold_reference", "url": "", "status": "project_defined_assumption",
     },
     "THESIS": {
         "citation": "Abdulaziz, L. (2026). Nature-based Solutions NbS opportunity mapping and portfolio design in Köln-Kalk for pluvial flooding",
@@ -67,9 +67,30 @@ DESIGNS = {
 }
 
 DEFAULT_POLICY = {
-    "profile_id": "koeln_thesis_provisional_v1", "rule_scope": "Koeln", "municipality": "Koeln",
+    "profile_id": "generic_unconfigured_v1", "profile_kind": "generic", "rule_scope": "", "municipality": "",
     "profile_reviewed": False, "profile_review_ref": None,
+    "groundwater_preferred_m": None, "groundwater_floor_m": None,
+    "neighbour_setback_m": None, "basement_recommended_m": None,
+    "asset_clearance_m": None, "protection_zones": None, "sewer_strip_bands": [],
+    "groundwater_intermediate_action": "CONDITIONAL", "groundwater_exception_fields": [],
+    "neighbour_setback_recommended": False, "basement_setback_recommended": True, "asset_clearance_recommended": False,
+    "authority_label": "competent local water / drainage authority",
+    "rule_sources": {}, "references": {},
+}
+
+KOELN_POLICY = {
+    **DEFAULT_POLICY,
+    "profile_id": "koeln_thesis_provisional_v1", "profile_kind": "koeln", "rule_scope": "Koeln", "municipality": "Koeln",
     "groundwater_preferred_m": 1.0, "groundwater_floor_m": 0.5,
     "neighbour_setback_m": 2.0, "basement_recommended_m": 6.0,
     "asset_clearance_m": 1.0,
+    "groundwater_intermediate_action": "EXCEPTION",
+    "groundwater_exception_fields": ["low_pollution_runoff", "groundwater_exception_approved", "groundwater_standard_confirmed"],
+    "protection_zones": {"excluded": ["I", "II"], "outer": ["III", "IIIA", "IIIB"],
+                         "outside": ["OUTSIDE"], "shaft_excluded": ["I", "II", "III", "IIIA", "IIIB"]},
+    "sewer_strip_bands": [{"min_diameter_cm": 0., "total_width_m": 6.},
+                           {"min_diameter_cm": 70., "total_width_m": 7.5},
+                           {"min_diameter_cm": 200., "total_width_m": 10.}],
+    "authority_label": "Stadt Köln / StEB Köln",
+    "rule_sources": {"infiltration": "KOELN2022", "groundwater": "DWA_SUMMARY", "assets": "STEB2025", "roof": "ROOF2026"},
 }

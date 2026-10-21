@@ -2,7 +2,8 @@
 
 from dataclasses import dataclass
 import math
-from .catalogue import DEFAULT_POLICY, DESIGNS, SOURCES
+from .catalogue import DESIGNS, SOURCES
+from .profiles import SOURCE_ROLES, governing_source, validate_policy
 
 STATUSES = ("ADMISSIBLE", "CONDITIONAL", "FAIL", "NOT_APPLICABLE")
 
@@ -44,13 +45,14 @@ class Decision:
     evidence_ref: str
     responsible_party: str
     closure: str
+    reference: dict = None
 
     def record(self):
         # All decision fields are immutable scalars; recursive deepcopy through
         # dataclasses.asdict added substantial cost to every audit row.
-        return {**vars(self), **{"citation": SOURCES[self.source_id]["citation"],
-                                "source_url": SOURCES[self.source_id]["url"],
-                                "source_locator": SOURCES[self.source_id]["locator"]}}
+        reference = self.reference or SOURCES[self.source_id]
+        return {**{k:v for k,v in vars(self).items() if k != "reference"},
+                "citation": reference["citation"], "source_url": reference["url"], "source_locator": reference["locator"]}
 
 
 def aggregate(decisions):
@@ -80,20 +82,6 @@ def truth(value):
     return None
 
 
-def validate_policy(policy):
-    p = {**DEFAULT_POLICY, **policy}
-    if not isinstance(p['profile_reviewed'], bool):
-        raise ValueError('profile_reviewed must be a JSON boolean, never a string')
-    if p["municipality"] != p["rule_scope"] and not (p["profile_reviewed"] and p["profile_review_ref"]):
-        raise ValueError("A different NRW municipality needs a reviewed local rule profile and reference; Cologne rules cannot be silently transferred.")
-    for key in ("groundwater_floor_m", "groundwater_preferred_m", "neighbour_setback_m", "basement_recommended_m", "asset_clearance_m"):
-        numeric = number(p[key])
-        if numeric is None or numeric < 0:
-            raise ValueError(f"Invalid nonnegative policy threshold: {key}")
-        p[key] = numeric
-    if p["groundwater_floor_m"] > p["groundwater_preferred_m"]:
-        raise ValueError("Groundwater floor must not exceed preferred clearance")
-    return p
 
 
 class Rules:
@@ -110,8 +98,9 @@ class Rules:
 
     def add(self, rid, status, reason, observed=None, expected="", source="THESIS", closure="", party="Site designer / evidence owner"):
         evidence = self.a.get(f"evidence_ref__{rid}") or self.a.get("evidence_ref") or "MISSING"
+        source, reference = governing_source(self.p, source)
         self.rows.append(Decision(rid, status, reason, str(observed), expected, source, str(evidence), party,
-                                  closure if status in ("CONDITIONAL", "FAIL") else "None for this screening rule"))
+                                  closure if status in ("CONDITIONAL", "FAIL") else "None for this screening rule", reference))
 
     def boolean(self, key, label, source="THESIS", on_false="FAIL", party="Site designer / evidence owner"):
         raw = self.value(key)
@@ -123,6 +112,11 @@ class Rules:
 
     def minimum(self, key, limit, label, source, recommended=False):
         value = number(self.value(key))
+        if limit is None or SOURCE_ROLES.get(source) in self.p['unreferenced_rule_roles']:
+            self.add(key, "CONDITIONAL", label + ": local threshold is unconfigured", value,
+                     "Referenced applicable local threshold", "THESIS",
+                     "Register the applicable local rule and source; do not borrow a value from another jurisdiction.")
+            return
         status = "CONDITIONAL" if value is None else "ADMISSIBLE" if value >= limit else "CONDITIONAL" if recommended else "FAIL"
         self.add(key, status, label, value, f"≥ {limit:g} m" + (" (recommendation)" if recommended else ""), source,
                  "Survey the proposed module footprint and obtain authority / specialist review; redesign where necessary.")
@@ -137,6 +131,10 @@ class Rules:
                  "Referenced site evidence" if self.a.get("evidence_ref") else "No site evidence reference supplied",
                  self.a.get("evidence_ref"), "Dated evidence register reference", "THESIS",
                  "Link every supplied value to dated site evidence; field-level evidence_ref__<rule_id> is supported.")
+        if self.p['unreferenced_rule_roles']:
+            self.add('local_rule_sources', 'CONDITIONAL', 'Configured local criteria lack governing source references',
+                     str(self.p['unreferenced_rule_roles']), 'Cited applicable local criteria',
+                     closure='Register full local citations and their applicability; do not present project values as thesis-derived law.')
 
 
 def intervention_need(depth, threshold_m=0.10):
@@ -152,32 +150,41 @@ def intervention_need(depth, threshold_m=0.10):
 def groundwater(attrs, policy, design=None, vertical_datum=None, groundwater_scenario_id=None):
     r = Rules(attrs, policy, design)
     r.profile()
+    prohibited = truth(r.value('infiltration_prohibited'))
+    if prohibited is not None:
+        r.add('infiltration_prohibited', 'FAIL' if prohibited else 'ADMISSIBLE',
+              'Documented site-specific infiltration prohibition', prohibited, 'No documented incompatible infiltration pathway',
+              closure='Retain the prohibition and investigate a separately assessed non-infiltrating pathway.')
     zone = str(r.value("protection_zone") or "UNKNOWN").upper().replace(" ", "")
-    if zone in ("I", "II"):
-        r.add("protection_zone", "FAIL", "Infiltration normally excluded in protection zones I–II", zone, "Outside I–II", "KOELN2022", "Use a separately assessed non-infiltrating design.")
-    elif zone in ("III", "IIIA", "IIIB"):
-        if design == "infiltration_shaft":
-            r.add("protection_zone", "FAIL", "Shaft route in thesis is limited to outside protection zones", zone, "Outside water-protection zones", "KOELN2022", "Redesign the pathway and confirm the current authority requirements.")
-        else:
-            r.boolean("outer_zone_authority_ok", "Outer-zone typology and authority exception / conditions confirmed", "KOELN2022", "CONDITIONAL", "Water authority")
-    elif zone == "OUTSIDE":
-        r.add("protection_zone", "ADMISSIBLE", "Outside mapped water-protection zones", zone, "Known zone status", "KOELN2022")
+    zones = r.p['protection_zones']
+    if zones is None or 'infiltration' in r.p['unreferenced_rule_roles']:
+        r.add('protection_zone', 'CONDITIONAL', 'Applicable local protection-zone rules are unconfigured', zone,
+              'Referenced local zone-code crosswalk and pathway restrictions', 'THESIS',
+              'Register the applicable protection-zone rules and verify the local source-code crosswalk.')
+    elif zone in zones['excluded'] or (design == 'infiltration_shaft' and zone in zones['shaft_excluded']):
+        r.add('protection_zone', 'FAIL', 'Infiltration pathway excluded by the registered local protection-zone rule', zone,
+              'Outside locally excluded codes', 'LOCAL_INFILTRATION', 'Use a separately assessed non-infiltrating design.')
+    elif zone in zones['outer']:
+        r.boolean('outer_zone_authority_ok', 'Locally restricted-zone typology and authority conditions confirmed', 'LOCAL_INFILTRATION', 'CONDITIONAL', 'Water authority')
+    elif zone in zones['outside']:
+        r.add('protection_zone', 'ADMISSIBLE', 'Outside the registered protection-zone categories', zone, 'Known locally mapped zone status', 'LOCAL_INFILTRATION')
     else:
-        r.add("protection_zone", "CONDITIONAL", "Protection-zone evidence missing or unrecognized", zone, "I / II / III / IIIA / IIIB / OUTSIDE", "KOELN2022", "Obtain current authoritative water-protection boundaries.")
+        r.add('protection_zone', 'CONDITIONAL', 'Protection-zone evidence missing or not in the local code crosswalk', zone,
+              str(zones), 'LOCAL_INFILTRATION', 'Obtain current authoritative boundaries and map source categories explicitly.')
     for key, label in [("receiving_ground_clean", "Clean receiving ground / contamination resolved"),
                        ("soil_infiltration_ok", "Site-scale soil and infiltration suitability"),
                        ("runoff_quality_ok", "Runoff quality and treatment acceptable for infiltration")]:
-        r.boolean(key, label, "KOELN2022")
+        r.boolean(key, label, "LOCAL_INFILTRATION")
     r.boolean("aquifer_evidence_ok", "Aquifer setting and groundwater fluctuation evidence", on_false="CONDITIONAL")
-    r.boolean("mounding_assessed_ok", "Groundwater mounding / neighbouring receptors assessed", "DWA_SUMMARY", "CONDITIONAL")
-    r.minimum("neighbour_distance_m", r.p["neighbour_setback_m"], "Distance to neighbouring property", "KOELN2022")
+    r.boolean("mounding_assessed_ok", "Groundwater mounding / neighbouring receptors assessed", "LOCAL_GROUNDWATER", "CONDITIONAL")
+    r.minimum("neighbour_distance_m", r.p["neighbour_setback_m"], "Distance to neighbouring property", "LOCAL_INFILTRATION", recommended=r.p['neighbour_setback_recommended'])
     basement = truth(r.value("non_waterproof_basement_present"))
     if basement is False:
-        r.add("basement_distance_m", "NOT_APPLICABLE", "Evidence confirms no relevant non-waterproof basement", False, "Documented basement condition", "KOELN2022")
+        r.add("basement_distance_m", "NOT_APPLICABLE", "Evidence confirms no relevant non-waterproof basement", False, "Documented basement condition", "LOCAL_INFILTRATION")
     elif basement is True:
-        r.minimum("basement_distance_m", r.p["basement_recommended_m"], "Recommended non-waterproof basement separation", "KOELN2022", recommended=True)
+        r.minimum("basement_distance_m", r.p["basement_recommended_m"], "Non-waterproof basement separation", "LOCAL_INFILTRATION", recommended=r.p['basement_setback_recommended'])
     else:
-        r.add("basement_distance_m", "CONDITIONAL", "Basement presence / waterproofing unknown", None, "Documented basement status", "KOELN2022", "Survey relevant basements and foundation protections.")
+        r.add("basement_distance_m", "CONDITIONAL", "Basement presence / waterproofing unknown", None, "Documented basement status", "LOCAL_INFILTRATION", "Survey relevant basements and foundation protections.")
 
     # A groundwater-depth raster alone cannot establish module-base clearance.
     base = number(attrs.get(f"module_base_elevation_m__{design}")) if design else None
@@ -187,13 +194,17 @@ def groundwater(attrs, policy, design=None, vertical_datum=None, groundwater_sce
     state_ok = bool(groundwater_scenario_id) and r.value("groundwater_scenario_id") == groundwater_scenario_id
     if not design:
         r.add("groundwater_clearance", "CONDITIONAL", "Preliminary groundwater pathway screen; no specific module-base design", None,
-              "Design-specific module base, design groundwater state and uncertainty on a common vertical datum", "DWA_SUMMARY",
+              "Design-specific module base, design groundwater state and uncertainty on a common vertical datum", "LOCAL_GROUNDWATER",
               "Define each module base and re-evaluate final clearance. A coarse screen never establishes final infiltration permission.")
     elif base is None or gw is None or uncertainty is None or uncertainty < 0 or not datum_ok or not state_ok:
         r.add("groundwater_clearance", "CONDITIONAL", "Module base, design groundwater, uncertainty, scenario or common vertical datum missing / incompatible",
               {"base_m": base, "groundwater_m": gw, "uncertainty_m": uncertainty, "datum_matches": datum_ok, "scenario_matches": state_ok},
-              "base elevation − design groundwater elevation − uncertainty", "DWA_SUMMARY",
+              "base elevation − design groundwater elevation − uncertainty", "LOCAL_GROUNDWATER",
               "Survey design-specific base elevations; document MHGW / design state, datum and nonnegative uncertainty.")
+    elif r.p['groundwater_floor_m'] is None or r.p['groundwater_preferred_m'] is None or 'groundwater' in r.p['unreferenced_rule_roles']:
+        r.add('groundwater_clearance', 'CONDITIONAL', 'Module geometry exists but the applicable groundwater thresholds are unconfigured',
+              f'{base-gw-uncertainty:.6g} m calculated separation', 'Referenced local floor / preferred separation and exception procedure',
+              'THESIS', 'Register the applicable technical standard and authority conditions; no numeric threshold is universal.')
     else:
         clearance = base - gw - uncertainty
         preferred, floor = r.p["groundwater_preferred_m"], r.p["groundwater_floor_m"]
@@ -203,18 +214,19 @@ def groundwater(attrs, policy, design=None, vertical_datum=None, groundwater_sce
             if math.isclose(clearance, boundary, rel_tol=0, abs_tol=1e-9):
                 clearance = boundary
         if clearance < floor:
-            status, reason = "FAIL", "Robust module-base separation below the provisional technical-summary floor"
+            status, reason = "FAIL", "Robust module-base separation below the registered floor"
         elif clearance < preferred:
-            ok = truth(r.value("low_pollution_runoff")) is True and truth(r.value("groundwater_exception_approved")) is True and truth(r.value("groundwater_standard_confirmed")) is True
-            status = "ADMISSIBLE" if ok else "CONDITIONAL"
-            reason = "Exceptional separation band: low-pollution runoff, confirmed standard and explicit authority exception required"
+            action=r.p['groundwater_intermediate_action']
+            ok=action=='EXCEPTION' and all(truth(r.value(field)) is True for field in r.p['groundwater_exception_fields'])
+            status='ADMISSIBLE' if ok else 'FAIL' if action=='FAIL' else 'CONDITIONAL'
+            reason='Registered intermediate-band treatment: '+action+'; exception evidence: '+', '.join(r.p['groundwater_exception_fields'])
         else:
             status = "ADMISSIBLE" if truth(r.value("groundwater_standard_confirmed")) is True else "CONDITIONAL"
-            reason = "Preferred separation met; primary-standard and authority applicability must be confirmed"
+            reason = "Preferred registered separation met; standard and authority applicability must be confirmed"
         r.add("groundwater_clearance", status, reason,
               f"{clearance:.6g} m = {base:g} − {gw:g} − {uncertainty:g}",
-              f"Preferred ≥{preferred:g} m; [{floor:g}, {preferred:g}) m exception; <{floor:g} m fail (secondary summary)",
-              "DWA_SUMMARY", "Confirm DWA-A 138-1 and authority conditions; close exceptions or assess a separately encoded lined design.", "Hydrogeologist / water authority")
+              f"Preferred ≥{preferred:g} m; [{floor:g}, {preferred:g}) m: {r.p['groundwater_intermediate_action']}; <{floor:g} m fail (registered profile)",
+              "LOCAL_GROUNDWATER", "Confirm the registered technical standard and authority conditions; close exceptions or assess a separately encoded lined design.", "Hydrogeologist / water authority")
     return r.rows
 
 
@@ -246,41 +258,43 @@ def evaluate_design(attrs, design, policy, vertical_datum=None, groundwater_scen
     approval = r.value("permission_status")
     status = "ADMISSIBLE" if approval in ("confirmed", "not_required_confirmed") else "FAIL" if approval == "refused" else "CONDITIONAL"
     r.add("permission_status", status, "Pathway-specific permit / notification and authority route", approval,
-          "confirmed or not_required_confirmed; pending / missing conditional; refused fail", "KOELN2022" if infiltrates else "THESIS",
+          "confirmed or not_required_confirmed; pending / missing conditional; refused fail", "LOCAL_INFILTRATION" if infiltrates else "THESIS",
           "Record competent authority, required route, decision / notification reference and applicable conditions.", "Owner / competent authority")
 
     if family == "roof":
         for key in ("roof_structure_ok", "roof_waterproofing_ok", "roof_drainage_ok", "roof_fire_safety_ok"):
-            r.boolean(key, key.replace("_", " "), "ROOF2026")
+            r.boolean(key, key.replace("_", " "), "LOCAL_ROOF")
         pv = truth(r.value("pv_present"))
         if pv is True:
-            r.boolean("roof_pv_compatibility_ok", "PV / substrate clearance and roof design compatible", "ROOF2026")
+            r.boolean("roof_pv_compatibility_ok", "PV / substrate clearance and roof design compatible", "LOCAL_ROOF")
         elif pv is False:
-            r.add("roof_pv_compatibility_ok", "NOT_APPLICABLE", "No PV installation evidenced", False, "PV condition known", "ROOF2026")
+            r.add("roof_pv_compatibility_ok", "NOT_APPLICABLE", "No PV installation evidenced", False, "PV condition known", "LOCAL_ROOF")
         else:
-            r.add("roof_pv_compatibility_ok", "CONDITIONAL", "PV presence unknown", None, "PV evidence", "ROOF2026", "Check PV and roof layout.")
+            r.add("roof_pv_compatibility_ok", "CONDITIONAL", "PV presence unknown", None, "PV evidence", "LOCAL_ROOF", "Check PV and roof layout.")
         if design == "blue_green_roof":
-            r.boolean("roof_retention_design_ok", "Blue-green storage, throttle and emergency drainage design", "ROOF2026")
+            r.boolean("roof_retention_design_ok", "Blue-green storage, throttle and emergency drainage design", "LOCAL_ROOF")
         r.add("groundwater_pathway", "NOT_APPLICABLE", "Roof design contains no deliberate infiltration", None, "Separate downstream modules assessed independently", "THESIS")
     else:
         for key in ("utilities_clearance_ok", "excavation_contamination_ok", "drainage_asset_access_ok"):
-            r.boolean(key, key.replace("_", " "), "STEB2025" if "asset" in key else "THESIS")
+            r.boolean(key, key.replace("_", " "), "LOCAL_ASSETS" if "asset" in key else "THESIS")
         assets = truth(r.value("public_drainage_assets_present"))
         if assets is True:
-            r.minimum("asset_edge_distance_m", r.p["asset_clearance_m"], "Clearance from public drainage asset edge", "STEB2025")
+            r.minimum("asset_edge_distance_m", r.p["asset_clearance_m"], "Clearance from public drainage asset edge", "LOCAL_ASSETS", recommended=r.p['asset_clearance_recommended'])
             diameter, distance = number(r.value("sewer_profile_cm")), number(r.value("sewer_centerline_distance_m"))
-            width = None if diameter is None or diameter < 0 else 10.0 if diameter >= 200 else 7.5 if diameter >= 70 else 6.0
+            applicable = [band['total_width_m'] for band in r.p['sewer_strip_bands'] if diameter is not None and diameter >= band['min_diameter_cm'] and 'assets' not in r.p['unreferenced_rule_roles']]
+            width = applicable[-1] if applicable else None
             coordinated = truth(r.value("sewer_strip_coordination_ok")) is True
             ok = width is not None and distance is not None and distance >= width / 2
-            r.add("sewer_protection_strip", "ADMISSIBLE" if ok or coordinated else "CONDITIONAL",
-                  "Sewer protection corridor: total width 6 / 7.5 / 10 m; early StEB coordination for affected works",
-                  {"profile_cm": diameter, "centerline_distance_m": distance, "strip_total_width_m": width, "agreement": coordinated},
-                  "Outside mapped protection strip or documented agreement; widths assumed centred, verify actual asset corridor", "STEB2025",
-                  "Use authorized surveyed protection-corridor geometry and obtain StEB conditions; never infer edge distance from pipe centreline.")
+            surveyed=truth(r.value('sewer_corridor_compatible'))
+            r.add("sewer_protection_strip", 'FAIL' if surveyed is False else "ADMISSIBLE" if surveyed is True or (width is not None and (ok or coordinated)) else "CONDITIONAL",
+                  "Sewer protection corridor from the registered local profile; coordinate affected works with " + r.p["authority_label"],
+                  {"profile_cm": diameter, "centerline_distance_m": distance, "strip_total_width_m": width, "agreement": coordinated, "surveyed_corridor_compatible":surveyed},
+                  "Outside mapped protection strip or documented agreement; widths assumed centred, verify actual asset corridor", "LOCAL_ASSETS",
+                  "Use authorized surveyed protection-corridor geometry and obtain local authority conditions; never infer edge distance from pipe centreline.")
         elif assets is False:
-            r.add("drainage_asset_clearance", "NOT_APPLICABLE", "Authorized evidence confirms no affected public drainage assets", False, "Verified asset coverage", "STEB2025")
+            r.add("drainage_asset_clearance", "NOT_APPLICABLE", "Authorized evidence confirms no affected public drainage assets", False, "Verified asset coverage", "LOCAL_ASSETS")
         else:
-            r.add("drainage_asset_clearance", "CONDITIONAL", "Public drainage-asset evidence incomplete", None, "Authorized asset evidence", "STEB2025", "Obtain authorized asset / corridor data and check access and clearance.")
+            r.add("drainage_asset_clearance", "CONDITIONAL", "Public drainage-asset evidence incomplete", None, "Authorized asset evidence", "LOCAL_ASSETS", "Obtain authorized asset / corridor data and check access and clearance.")
         if infiltrates:
             # Keep each source row only once, retaining a separate profile audit above.
             r.rows.extend(d for d in groundwater(attrs, policy, design, vertical_datum, groundwater_scenario_id)
@@ -466,7 +480,21 @@ def evaluate_muriel(metrics, settings=None):
           'Groundwater screen retained separately; MURIEL does not grant infiltration permission',
           metrics.get('preliminary_infiltration_status', 'CONDITIONAL'), 'Assess actual infiltrating or lined pathway using independent NbS gates', 'THESIS',
           'Retain groundwater/soil/quality restrictions when designing the selected pathway.')
-    if incomplete:
+    criteria = metrics.get('criteria_source')
+    criteria_missing = False
+    if metrics.get('criteria_applicability_required'):
+        registered = bool(metrics.get('criteria_adoption_ref')) and metrics.get('criteria_scope_matches') is True and bool(criteria) and criteria.get('status') != 'unregistered_local_criteria'
+        criteria_missing = not registered
+        r.rows.append(Decision('MURIEL_LOCAL_APPLICABILITY', 'ADMISSIBLE' if registered else 'CONDITIONAL',
+                               'Local adoption of the registered screening criteria; the Porz/Eil numbers are not universal standards',
+                               str(metrics.get('criteria_profile_id')), 'Dated adoption reference and matching governing jurisdiction',
+                               'THESIS', str(metrics.get('criteria_adoption_ref') or 'MISSING_LOCAL_ADOPTION'),
+                               'Planning authority / researcher', 'Register locally appropriate criteria and their source before interpreting the planning classes.'))
+    if criteria:
+        for decision in r.rows:
+            if decision.source_id == 'MURIEL':
+                decision.source_id, decision.reference = 'MURIEL_CRITERIA', criteria
+    if incomplete or criteria_missing:
         planning = 'EVIDENCE_GAP'
     elif below:
         planning = 'BELOW_SCREEN'

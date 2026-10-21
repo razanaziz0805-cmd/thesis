@@ -1,19 +1,22 @@
 {
-  "run_id": "KALK_SRI5_001",
-  "area_label": "Köln-Kalk",
-  "scenario_id": "SRI5",
+  "schema_version": "0.6",
+  "run_id": "STUDY_RUN_001",
+  "area_label": "Study area",
+  "scenario_id": "REQUIRED",
   "scenario_description": "Confirm the event definition against provider metadata.",
-  "stated_return_period_years": 30,
-  "return_period_source": "User statement; provider confirmation required.",
+  "stated_return_period_years": null,
+  "return_period_source": null,
   "groundwater_scenario_id": "UNKNOWN_DESIGN_GROUNDWATER",
   "vertical_datum": null,
-  "crs": "EPSG:25832",
+  "crs": "",
+  "jurisdiction": "",
   "flood_threshold_m": 0.1,
+  "flood_threshold_reference": "Project planning assumption; default 10 cm retained from original user specification; review for this area.",
   "max_units": 250000,
   "flood": {
-    "path": "../data/flood_SRI5_cm.tif",
+    "path": "../data/flood_depth.tif",
     "type": "raster",
-    "units": "cm",
+    "units": null,
     "band": 1,
     "metadata": {
       "provider": "REQUIRED",
@@ -32,18 +35,29 @@
       "license": "REQUIRED"
     }
   },
-  "output_dir": "../outputs/kalk_planning_001",
+  "output_dir": "../outputs/study_planning_001",
   "policy": {
-    "profile_id": "koeln_thesis_provisional_v1",
-    "rule_scope": "Koeln",
-    "municipality": "Koeln",
+    "profile_id": "generic_unconfigured_v1",
+    "profile_kind": "generic",
+    "rule_scope": "",
+    "municipality": "",
     "profile_reviewed": false,
     "profile_review_ref": null,
-    "groundwater_preferred_m": 1.0,
-    "groundwater_floor_m": 0.5,
-    "neighbour_setback_m": 2.0,
-    "basement_recommended_m": 6.0,
-    "asset_clearance_m": 1.0
+    "groundwater_preferred_m": null,
+    "groundwater_floor_m": null,
+    "neighbour_setback_m": null,
+    "basement_recommended_m": null,
+    "asset_clearance_m": null,
+    "protection_zones": null,
+    "sewer_strip_bands": [],
+    "groundwater_intermediate_action": "CONDITIONAL",
+    "groundwater_exception_fields": [],
+    "neighbour_setback_recommended": false,
+    "basement_setback_recommended": true,
+    "asset_clearance_recommended": false,
+    "authority_label": "competent local water / drainage authority",
+    "rule_sources": {},
+    "references": {}
   },
   "designs": [
     "green_roof",
@@ -70,6 +84,9 @@
   "ownership": null,
   "muriel": {
     "enabled": false,
+    "criteria_profile_id": "porz_eil_2022_reference",
+    "criteria_scope": "",
+    "criteria_adoption_ref": null,
     "receptors": [],
     "municipal_land": null,
     "roads": null,
@@ -79,7 +96,8 @@
   "mode": "planning",
   "planning": {
     "surfaces": null,
-    "heat": null
+    "heat": null,
+    "restrictions": null
   },
   "preparation": {
     "enabled": true

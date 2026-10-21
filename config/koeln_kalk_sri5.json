@@ -86,12 +86,16 @@
     "municipal_land": null,
     "roads": null,
     "usable_space": null,
-    "routes": null
+    "routes": null,
+    "criteria_profile_id": "porz_eil_2022_reference",
+    "criteria_scope": "Koeln",
+    "criteria_adoption_ref": "Original thesis-project MURIEL specification requested by user; registered 2026-10-21. Schwerdorf (2022), slides 19–20; planning criteria, not permission."
   },
   "output_dir": "../outputs/KALK_SRI5_10CM_V001",
   "preparation": {
     "enabled": true,
     "search_buffer_m": 100,
     "grid": {}
-  }
+  },
+  "jurisdiction": "Koeln"
 }

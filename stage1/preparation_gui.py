@@ -11,7 +11,7 @@ from qgis.PyQt.QtWidgets import (QApplication,QCheckBox,QComboBox,QDialog,QDoubl
     QTableWidget,QTableWidgetItem,QTextBrowser,QVBoxLayout,QWidget)
 from qgis.PyQt.QtCore import QTimer,QUrl
 from qgis.PyQt.QtGui import QDesktopServices
-from osgeo import ogr
+from osgeo import gdal,ogr,osr
 
 from .preparation import prepare
 from .runtime import RunCancelled
@@ -28,12 +28,12 @@ class PreparationDialog(QDialog):
         self.boundary=self.path_row(form,'Study boundary file','Choose study boundary',False)
         self.boundary_layer=QLineEdit();self.boundary_layer.setPlaceholderText('Layer name if the file contains multiple layers')
         form.addRow('Boundary layer',self.boundary_layer)
-        self.boundary_crs=QLineEdit();self.boundary_crs.setPlaceholderText('Optional, for example EPSG:25832; never inferred from coordinates')
+        self.boundary_crs=QLineEdit();self.boundary_crs.setPlaceholderText('Optional confirmed source CRS; never inferred from coordinates')
         self.boundary_ref=QLineEdit();self.boundary_ref.setPlaceholderText('Dated source confirmation for an assigned/replaced CRS')
         form.addRow('Confirmed boundary source CRS',self.boundary_crs);form.addRow('Boundary CRS evidence',self.boundary_ref)
         self.geometry_only=QCheckBox('Allow a geometry-only boundary when .dbf is missing');form.addRow(self.geometry_only)
         self.master=self.path_row(form,'Master raster','Choose master grid raster',False)
-        self.target=QLineEdit('EPSG:25832');form.addRow('Target projected CRS',self.target)
+        self.target=QLineEdit();self.target.setPlaceholderText('Projected metres; blank uses a suitable declared master/boundary CRS');form.addRow('Target projected CRS',self.target)
         self.cell=QDoubleSpinBox();self.cell.setRange(0,10000);self.cell.setDecimals(3);self.cell.setSpecialValueText('Preserve native master grid');form.addRow('Cell size (metres; 0 = native)',self.cell)
         self.buffer=QDoubleSpinBox();self.buffer.setRange(0,10000);self.buffer.setValue(100);self.buffer.setSuffix(' m');form.addRow('Vector search extension',self.buffer)
         self.folder=self.path_row(form,'Workspace folder','Choose preparation workspace',True)
@@ -89,7 +89,20 @@ class PreparationDialog(QDialog):
             if raster:spec.update(kind=self.table.cellWidget(row,2).currentText(),resampling=self.table.cellWidget(row,3).currentText(),resampling_evidence_ref=ref or None)
             datasets.append(spec)
         if not datasets:raise ValueError('Add at least one input file.')
-        job={'study_area':boundary,'target_crs':self.target.text().strip(),'search_buffer_m':self.buffer.value(),
+        target=self.target.text().strip()
+        if not target:
+            if self.master.text().strip():
+                ds=gdal.Open(self.master.text().strip());srs=osr.SpatialReference(wkt=ds.GetProjection()) if ds and ds.GetProjection() else None
+            elif boundary.get('source_crs'):
+                srs=osr.SpatialReference();srs.SetFromUserInput(boundary['source_crs'])
+            else:
+                ds=ogr.Open(boundary['path']);layer=ds.GetLayerByName(boundary['layer']) if ds and boundary.get('layer') else ds.GetLayer(0) if ds else None
+                srs=layer.GetSpatialRef().Clone() if layer and layer.GetSpatialRef() else None
+            if not srs or not srs.IsProjected() or abs(srs.GetLinearUnits()-1)>1e-8:
+                raise ValueError('Choose a projected target CRS in metres for this area; no suitable declared input CRS is available.')
+            target=(srs.GetAuthorityName(None)+':'+srs.GetAuthorityCode(None)) if srs.GetAuthorityCode(None) else srs.ExportToWkt()
+            self.target.setText(target)
+        job={'study_area':boundary,'target_crs':target,'search_buffer_m':self.buffer.value(),
              'datasets':datasets,'output_dir':str(Path(self.folder.text()).resolve()/('prepared_'+datetime.now().strftime('%Y%m%d_%H%M%S')+'_'+uuid4().hex[:6]))}
         if any(s['type']=='raster' for s in datasets):
             if not self.master.text().strip():raise ValueError('Choose a master raster for grid origin and resolution.')

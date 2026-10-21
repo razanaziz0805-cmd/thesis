@@ -47,7 +47,7 @@ def opportunity(attrs, family, groundwater_status, threshold_m):
     return dict(family=family, family_label=label, opportunity_class=kind, status=status,
                 reason_code=code, land_type=land or 'unknown', need_local=need,
                 infiltration_status=infiltration_status, pathway=pathway, next_action=next_action,
-                source_ids='THESIS; KOELN2022', reference='Thesis Table 4.2; §§5.1, 5.5.1–5.5.4; Stadt Köln (2022), as cited in thesis',
+                source_ids='THESIS', reference='Thesis Table 4.2; §§5.1, 5.5.1–5.5.4; applicable local rules are registered separately',
                 explanation=f'{code}: {why}\n{context}\n{pathway}\nNext: {next_action}\n'
                             'Basis: thesis Table 4.2 and §§5.1, 5.5.1–5.5.4. City rules are locally scoped and require current review. '
                             'Planning opportunity only: no final admissibility or simulated benefit.')
@@ -55,9 +55,9 @@ def opportunity(attrs, family, groundwater_status, threshold_m):
 
 def delivery_action(owner):
     return {
-        'municipal': 'Coordinate a municipal public-space feasibility review with Stadt Köln / StEB; verify access and operator.',
+        'municipal': 'Coordinate a municipal public-space feasibility review with the competent local water / drainage authority; verify access and operator.',
         'private': 'Engage the landowner and assess a voluntary agreement, advice and the applicable funding route.',
-        'other_public': 'Coordinate with the responsible public landowner and Stadt Köln / StEB.',
+        'other_public': 'Coordinate with the responsible public landowner and the competent local water / drainage authority.',
         'mixed': 'Agree a joint public/private delivery approach; retain the mapped ownership shares.',
         'conflict': 'Resolve overlapping ownership evidence before assigning a delivery route.',
     }.get(owner, 'Obtain current cadastral ownership evidence before assigning a delivery route.')

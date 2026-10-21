@@ -6,7 +6,7 @@ from osgeo import gdal, osr
 import numpy as np
 from qgis.core import QgsCoordinateReferenceSystem, QgsGeometry, QgsRectangle
 
-from .catalogue import DEFAULT_POLICY, DESIGNS
+from .catalogue import KOELN_POLICY as DEFAULT_POLICY, DESIGNS
 from .engine import COMMON_RULES
 from .gis import memory_layer, write_layer
 
@@ -101,7 +101,7 @@ def create_demo(directory):
         'demo': True, 'run_id': 'DEMO_SRI5_CM_10CM', 'area_label': 'Synthetic test domain · not actual Köln-Kalk',
         'scenario_id': 'SYNTHETIC_SRI5', 'scenario_description': 'Synthetic demonstration using user-requested SRI5 configuration; no real rainfall model',
         'stated_return_period_years': 30, 'return_period_source': 'User statement; not an independently verified SRI-to-return-period conversion',
-        'groundwater_scenario_id': 'SYNTHETIC_HIGH_GW', 'crs': 'EPSG:25832', 'vertical_datum': 'SYNTHETIC_DHHN2016',
+        'groundwater_scenario_id': 'SYNTHETIC_HIGH_GW', 'crs': 'EPSG:25832', 'jurisdiction':'Koeln', 'vertical_datum': 'SYNTHETIC_DHHN2016',
         'flood_threshold_m': .1, 'max_units': 250000,
         'flood': {'path': 'inputs/flood_cm.tif', 'type': 'raster', 'band': 1, 'units': 'cm', 'metadata': meta},
         'study_area': {'path': 'inputs/synthetic.gpkg', 'layer': 'study_area', 'metadata': meta},
@@ -177,6 +177,7 @@ def create_muriel_demo(directory):
                   flood={**spec('flood'),'type':'vector','id_field':'unit_id','depth_field':'depth_cm','units':'cm'},
                   study_area=spec('study_area'),evidence=[],ownership=None,combinations=[])
     config['muriel']={'enabled':True,'thresholds':{'footprint_mode':'depth_mask'},'receptors':[spec('receptors')],
+                      'criteria_adoption_ref':'SYNTHETIC_LOCAL_SCREEN_ADOPTION_FOR_SOFTWARE_TEST_ONLY', 'criteria_scope':'Koeln',
                       'municipal_land':spec('municipal_land',municipal_verified=True),'roads':spec('roads'),
                       'usable_space':spec('usable_space',id_field='destination_id',usable_field='usable'),
                       'routes':spec('routes')}
@@ -211,3 +212,49 @@ def create_planning_demo(directory):
                                     'mapping':{'HOT':'priority','OTHER':'other'},'metadata':meta}})
     path.write_text(json.dumps(config,indent=2,ensure_ascii=False))
     return path
+
+
+def create_area_demo(directory, crs='EPSG:32631', depth_units='cm'):
+    """Neutral artificial project in any specified projected metre-based CRS.
+
+    This generates new test geometry; it never re-labels real source data.
+    No local standards, recurrence interval or engineering clearance is assumed.
+    """
+    from qgis.core import Qgis
+    from .configuration import planning_config
+    directory=Path(directory)
+    if directory.exists():
+        raise ValueError('Choose a new example directory; earlier outputs are preserved.')
+    reference=QgsCoordinateReferenceSystem(crs)
+    if not reference.isValid() or reference.isGeographic() or reference.mapUnits()!=Qgis.DistanceUnit.Meters:
+        raise ValueError('The synthetic example needs a projected CRS in metres.')
+    if depth_units not in ('cm','m'):
+        raise ValueError('Example depth units must be cm or m.')
+    inputs=directory/'inputs';inputs.mkdir(parents=True)
+    left,top,cell,cols,rows=360000.,5640000.,10.,8,6
+    values=np.array([[0,0,5,9,0,0,0,0], [0,10,20,40,0,0,15,20], [0,20,35,60,0,0,20,30],
+                     [0,10,30,40,0,0,0,0], [0,0,0,0,0,5,0,0], [0,0,0,0,0,0,0,-9999]],dtype='float32')
+    if depth_units=='m':values=np.where(values==-9999,-9999,values/100).astype('float32')
+    raster=inputs/'flood_depth.tif';ds=gdal.GetDriverByName('GTiff').Create(str(raster),cols,rows,1,gdal.GDT_Float32,options=['COMPRESS=DEFLATE'])
+    ds.SetGeoTransform((left,cell,0,top,0,-cell));ds.SetProjection(reference.toWkt())
+    ds.GetRasterBand(1).SetNoDataValue(-9999);ds.GetRasterBand(1).SetUnitType(depth_units);ds.GetRasterBand(1).WriteArray(values);ds=None
+    gpkg=inputs/'synthetic_area.gpkg'
+    def rect(x,y,w,h):return QgsGeometry.fromRect(QgsRectangle(left+x,top-y-h,left+x+w,top-y))
+    write_layer(gpkg,memory_layer('study_area',[({'id':'SYNTHETIC_AREA'},rect(0,0,80,60))],reference),'study_area',first=True)
+    surfaces=[]
+    types=['roof','roof','open_space','open_space','verge','footway','parking','pavement']
+    for row in range(rows):
+        for col in range(cols):surfaces.append(({'surface':types[col]},rect(col*10,row*10,10,10)))
+    write_layer(gpkg,memory_layer('surfaces',surfaces,reference),'surfaces')
+    write_layer(gpkg,memory_layer('ownership',[({'owner':'CITY'},rect(0,0,40,60)),({'owner':'PRIVATE'},rect(40,0,40,60))],reference),'ownership')
+    write_layer(gpkg,memory_layer('heat',[({'class':'HIGH'},rect(0,0,40,60)),({'class':'OTHER'},rect(40,0,40,60))],reference),'heat')
+    metadata={'provider':'Generated software fixture','date':'synthetic','version':'v0.6','license':'Generated test data',
+              'evidence_class':'synthetic','limitations':'No actual study area, local law, storm or ownership is represented.'}
+    def spec(layer):return {'path':'inputs/synthetic_area.gpkg','layer':layer,'metadata':metadata}
+    config=planning_config(flood={'path':'inputs/flood_depth.tif','type':'raster','band':1,'units':depth_units,'metadata':metadata},
+                           study_area=spec('study_area'),crs=crs,scenario='SYNTHETIC_EVENT',area_label='Synthetic study area',jurisdiction='Synthetic authority')
+    config.update(demo=True,run_id='DEMO_TRANSFERABLE_PLANNING',scenario_description='Artificial depth field; no return-period inference.',
+                  planning={'surfaces':{**spec('surfaces'),'class_field':'surface','mapping':{key:key for key in types}},
+                            'heat':{**spec('heat'),'class_field':'class','mapping':{'HIGH':'priority','OTHER':'other'}}},
+                  ownership={**spec('ownership'),'class_field':'owner','mapping':{'CITY':'municipal','PRIVATE':'private'}})
+    path=directory/'demo.json';path.write_text(json.dumps(config,indent=2,ensure_ascii=False));return path

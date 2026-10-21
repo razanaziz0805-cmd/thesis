@@ -28,6 +28,7 @@ from .engine import aggregate, evaluate_combination, evaluate_design, groundwate
 from .configuration import resolve_config
 from .runtime import RunControl
 from . import __version__
+from .profiles import profile_snapshot, source_registry
 
 gdal.UseExceptions()
 
@@ -151,7 +152,7 @@ def ownership(geom, index, records, field, mapping):
     return {"owner_class": status, **{k + "_fraction": v for k, v in fractions.items()}, "ownership_overlap_m2": duplicate_area}
 
 
-def join_evidence(geom, index, records, fields):
+def join_evidence(geom, index, records, fields, zone_priority=()):
     """Conservative area overlay. Missing coverage/mixed values never pass.
 
     A known prohibition anywhere in the unit is retained. Otherwise mixed fields
@@ -173,8 +174,12 @@ def join_evidence(geom, index, records, fields):
         if mask not in coverage_cache:
             coverage_cache[mask] = QgsGeometry.unaryUnion([g for g, _ in usable]).area() / geom.area() if usable else 0
         coverage = coverage_cache[mask]
-        if dest == "protection_zone" and any(str(v).upper() in ("I", "II") for v in values):
-            result[dest] = "I" if "I" in values else "II"
+        normalized = {str(v).upper().replace(' ','') for v in values} if dest == 'protection_zone' else set()
+        restrictive = next((code for code in zone_priority if code in normalized), None)
+        if dest == "protection_zone" and restrictive is not None:
+            result[dest] = restrictive
+        elif dest == 'infiltration_prohibited' and any(truth(v) is True for v in values):
+            result[dest] = True
         elif dest in ("receiving_ground_clean", "soil_infiltration_ok", "runoff_quality_ok") and any(truth(v) is False for v in values):
             result[dest] = False
         elif coverage < 1 - 1e-6 or not values:
@@ -408,12 +413,16 @@ def write_layer(path, layer, name, first=False):
 
 
 def summary(rows):
-    return {
-        "status": aggregate(rows),
-        "reason_codes": "; ".join(d.rule_id for d in rows if d.status in ("FAIL", "CONDITIONAL")),
-        "explanation": "\n\n".join(f"[{d.status}] {d.rule_id}: {d.reason}\nObserved: {d.observed}\nExpected: {d.expected}\nSource: {SOURCES[d.source_id]['citation']} | {SOURCES[d.source_id]['locator']}\n{SOURCES[d.source_id]['url']}\nEvidence: {d.evidence_ref}\nResponsible: {d.responsible_party}\nClose: {d.closure}" for d in rows),
-        "source_ids": "; ".join(sorted({d.source_id for d in rows})),
-    }
+    explanations = []
+    for d in rows:
+        reference = d.reference or SOURCES[d.source_id]
+        explanations.append(f"[{d.status}] {d.rule_id}: {d.reason}\nObserved: {d.observed}\nExpected: {d.expected}\n"
+                            f"Source: {reference['citation']} | {reference['locator']}\n{reference['url']}\n"
+                            f"Evidence: {d.evidence_ref}\nResponsible: {d.responsible_party}\nClose: {d.closure}")
+    return {"status": aggregate(rows),
+            "reason_codes": "; ".join(d.rule_id for d in rows if d.status in ("FAIL", "CONDITIONAL")),
+            "explanation": "\n\n".join(explanations),
+            "source_ids": "; ".join(sorted({d.source_id for d in rows}))}
 
 
 def add_attribute_table(db, name, records):
@@ -506,7 +515,7 @@ def make_layout(project, layer, title, config, notes, extent, number_, context_l
     layout.setName(f"{number_:02d} {title}")
     layout.renderContext().setDpi(180)
     demo = config.get("demo", False)
-    header = "SYNTHETIC DEMONSTRATION · NOT A KÖLN-KALK RESULT" if demo else "STAGE 1 · SPATIAL OPPORTUNITY SCREEN"
+    header = "SYNTHETIC DEMONSTRATION · NOT A REAL STUDY-AREA RESULT" if demo else "STAGE 1 · SPATIAL OPPORTUNITY SCREEN"
     label_item(layout, header, 12, 7, 396, 8, 11, "#9b4248" if demo else "#23766a", True)
     label_item(layout, title, 12, 19, 393, 13, 20 if len(title) < 65 else 15, bold=True)
     label_item(layout, config['area_label'] + "  /  " + config['scenario_id'], 12, 35, 395, 8, 10)
@@ -613,6 +622,8 @@ def run(config_path, export_maps=True, progress=None, cancelled=None):
 
 def attach_evidence(config, units, grid, crs, control):
     """Shared evidence joins for planning and detailed qualification."""
+    zones = config['policy'].get('protection_zones') or {}
+    zone_priority = list(dict.fromkeys(code for kind in ('excluded','outer','shaft_excluded') for code in zones.get(kind, [])))
     for spec in config.get('evidence', []):
         control.check()
         features = load_vector(spec, crs, control=control)
@@ -636,7 +647,7 @@ def attach_evidence(config, units, grid, crs, control):
             for unit_index, u in enumerate(units):
                 if unit_index % 128 == 0:
                     control.check()
-                u['attrs'].update(join_evidence(u['geometry'], idx, records, fields))
+                u['attrs'].update(join_evidence(u['geometry'], idx, records, fields, zone_priority))
         else:
             raise ValueError("Evidence join must be id or spatial")
     derived_evidence(config, units, grid, crs, control=control)
@@ -655,7 +666,7 @@ def attach_evidence(config, units, grid, crs, control):
 
 def _run(config_path, export_maps, control, out):
     config = resolve_config(config_path)
-    crs = QgsCoordinateReferenceSystem(config.get('crs', 'EPSG:25832'))
+    crs = QgsCoordinateReferenceSystem(config['crs'])
     if not crs.isValid() or crs.isGeographic() or crs.mapUnits() != Qgis.DistanceUnit.Meters:
         raise ValueError("Use a valid projected CRS in metres")
     # A private project protects an existing QGIS GUI session and its unsaved
@@ -749,14 +760,14 @@ def _run(config_path, export_maps, control, out):
     with sqlite3.connect(gpkg) as db:
         add_attribute_table(db, 'decision_audit', audit)
         db.execute('CREATE INDEX audit_lookup ON decision_audit(unit_id, design, scenario_id)')
-        add_attribute_table(db, 'source_registry', [{'source_id': k, **v} for k, v in SOURCES.items()])
+        add_attribute_table(db, 'source_registry', [{'source_id': k, **v} for k, v in source_registry(config).items()])
         add_attribute_table(db, 'input_provenance', provenance)
     db.close()
     final_gpkg = out / 'stage1.gpkg'
     gpkg.replace(final_gpkg)
     gpkg = final_gpkg
     csv_write(out / 'decision_audit.csv', audit)
-    csv_write(out / 'source_registry.csv', [{'source_id': k, **v} for k, v in SOURCES.items()])
+    csv_write(out / 'source_registry.csv', [{'source_id': k, **v} for k, v in source_registry(config).items()])
     csv_write(out / 'candidate_register.csv', [{k: v for k, v in a.items() if k != 'explanation'} for a, _ in nbs])
     csv_write(out / 'combinations_register.csv', [a for a, _ in combos])
     csv_write(out / 'evidence_snapshot.csv', [u['attrs'] for u in units])
@@ -779,8 +790,10 @@ def _run(config_path, export_maps, control, out):
                 ]}
     manifest['muriel'] = muriel['summary'] if muriel else {'enabled': False}
     manifest['preparation']=config.get('preparation') or {'enabled':False}
+    manifest['decision_context']=profile_snapshot(config)
+    (out / 'rule_profile.json').write_text(json.dumps(profile_snapshot(config), indent=2, ensure_ascii=False))
     if config.get('demo'):
-        manifest['limitations'].insert(0, 'ALL INPUTS, EVIDENCE AND AUTHORITY DECISIONS ARE SYNTHETIC. NOT KÖLN-KALK FINDINGS.')
+        manifest['limitations'].insert(0, 'ALL INPUTS, EVIDENCE AND AUTHORITY DECISIONS ARE SYNTHETIC. NOT REAL STUDY-AREA FINDINGS.')
     (out / 'run_manifest.json').write_text(json.dumps(manifest, indent=2, ensure_ascii=False))
     (out / 'resolved_config.json').write_text(json.dumps(config, indent=2, ensure_ascii=False))
 
@@ -806,7 +819,7 @@ def _run(config_path, export_maps, control, out):
     if muriel:
         from .engine import muriel_settings
         p = muriel_settings(config['muriel'].get('thresholds'))
-        notes = (f'Area >{p["min_area_m2"]:g} m²; max depth\n>{p["min_max_depth_m"]:g} m. Receptor <{p["receptor_distance_m"]:g} m;\nmunicipal non-road land <{p["municipal_distance_m"]:g} m;\nusable destination ≤{p["destination_distance_m"]:g} m.\nProtect overlap ≥{p["protect_overlap_fraction"]*100:g}%.\n\nGrey: buildings / receptors.\nPale blue: flood footprint.\nBeige: roads. Pale green: city land.\n\nSchwerdorf (2022); thesis §§4.4.2,\n5.5.3. Reasons and evidence are\nstored with every feature.')
+        notes = (f'Area >{p["min_area_m2"]:g} m²; max depth\n>{p["min_max_depth_m"]:g} m. Receptor <{p["receptor_distance_m"]:g} m;\nmunicipal non-road land <{p["municipal_distance_m"]:g} m;\nusable destination ≤{p["destination_distance_m"]:g} m.\nProtect overlap ≥{p["protect_overlap_fraction"]*100:g}%.\n\nGrey: buildings / receptors.\nPale blue: flood footprint.\nBeige: roads. Pale green: city land.\n\nMethod origin: Schwerdorf (2022).\nActual criteria / local adoption:\nrule_profile.json and feature audit.')
         notes += '\n\nFootprint: ' + p['footprint_mode']
         for table, title in [('muriel_source_mask', 'MURIEL · registered flood-depth mask'), ('muriel_hotspots', 'MURIEL · flood hotspot screen'), ('muriel_priority', 'MURIEL · protect, investigate or adapt'), ('muriel_destinations', 'MURIEL · usable municipal destinations'), ('muriel_connections', 'MURIEL · routing evidence and gaps')]:
             if any(name == table for name, _ in layers):

@@ -249,6 +249,8 @@ def screen(units, aoi, crs, config, groundwater_records, control=None):
                      str(depth), f'> {cutoff:g} m; footprint_mode={p["footprint_mode"]}',
                      'MURIEL' if p['footprint_mode'] == 'depth_mask' else 'THESIS', 'Flood input; see checksummed input_provenance',
                      'Flood-data provider / researcher', 'Resolve depth NoData; do not convert it to dry land.' if depth is None else 'No additional closure for this source-mask observation')
+        if d.source_id == 'MURIEL' and spec.get('criteria_source'):
+            d.source_id, d.reference = 'MURIEL_CRITERIA', spec['criteria_source']
         source_mask.append(({'unit_id':a['unit_id'],'flood_depth_m':depth,'mask_class':'DEPTH_UNKNOWN' if depth is None else 'DEPTH_INCLUDED' if included else 'DEPTH_EXCLUDED',
                              'threshold_m':cutoff,'footprint_mode':p['footprint_mode'],'scenario_id':config['scenario_id'],'is_demo':int(config.get('demo',False)),**summary([d])},unit['geometry']))
         audit.append({'unit_id':a['unit_id'],'design':'MURIEL_SOURCE_MASK','scenario_id':config['scenario_id'],**d.record()})
@@ -274,6 +276,9 @@ def screen(units, aoi, crs, config, groundwater_records, control=None):
                        route_note=f'{len(links)} explicit / proximity connection records; route evidence is independent of distance',
                        preliminary_infiltration_status=gw_state,
                        evidence_ref='; '.join(_reference(s) for _, s in source_specs) + '; ' + '; '.join(_reference(spec.get(k)) for k in ('municipal_land', 'roads', 'usable_space')))
+        metrics.update(criteria_applicability_required=True, criteria_adoption_ref=spec.get('criteria_adoption_ref'),
+                       criteria_scope_matches=spec.get('criteria_scope_matches',False), criteria_profile_id=spec.get('criteria_profile_id'),
+                       criteria_source=spec.get('criteria_source'))
         planning, decisions = evaluate_muriel(metrics, p)
         # Source inventory references are retained per gate, rather than merely
         # attaching one citation to the whole map.
@@ -282,7 +287,7 @@ def screen(units, aoi, crs, config, groundwater_records, control=None):
                 'MURIEL_DESTINATION': _reference(usable_source), 'MURIEL_RETENTION_FUNCTION': _reference(usable_source)}
         for d in decisions:
             d.evidence_ref = refs.get(d.rule_id, d.evidence_ref)
-        base = {**metrics, 'source_unit_ids': json.dumps(h['source_unit_ids']), 'planning_class': planning,
+        base = {**{k:v for k,v in metrics.items() if k != 'criteria_source'}, 'source_unit_ids': json.dumps(h['source_unit_ids']), 'planning_class': planning,
                 'overlap_percent': metrics['overlap_fraction']*100, 'nearby_destination_ids': '; '.join(d['destination_id'] for d in near),
                 'scenario_id': config['scenario_id'], 'run_id': config['run_id'], 'is_demo': int(config.get('demo', False)), **summary(decisions)}
         priority_records.append((base, geom))
@@ -307,7 +312,9 @@ def screen(units, aoi, crs, config, groundwater_records, control=None):
     source_specs.extend((f'muriel_{k}', spec[k]) for k in ('municipal_land', 'roads', 'usable_space', 'routes') if spec.get(k))
     return {'source_mask': source_mask, 'hotspots': hotspot_records, 'priority': priority_records, 'destinations': destination_records,
             'connections': connection_records, 'context': context, 'audit': audit, 'sources': source_specs,
-            'summary': {'enabled': True, 'thresholds': p, 'footprint_definition': f'Edge-connected source polygons/cells at depth >{p["min_max_depth_m"] if p["footprint_mode"] == "depth_mask" else p["flood_extent_depth_m"]:g} m; mode={p["footprint_mode"]}',
+            'summary': {'enabled': True, 'thresholds': p,
+                        'criteria_registration': {key:spec.get(key) for key in ('criteria_profile_id','criteria_scope','criteria_adoption_ref','criteria_scope_matches','criteria_source')},
+                        'footprint_definition': f'Edge-connected source polygons/cells at depth >{p["min_max_depth_m"] if p["footprint_mode"] == "depth_mask" else p["flood_extent_depth_m"]:g} m; mode={p["footprint_mode"]}',
                         'footprint_count': len(hotspots), 'destination_count': len(destinations), 'connection_count': len(connection_records),
                         'unknown_source_unit_count': sum(a['mask_class']=='DEPTH_UNKNOWN' for a,_ in source_mask),
                         'planning_counts': {k: sum(a['planning_class'] == k for a, _ in priority_records) for k in sorted({a['planning_class'] for a, _ in priority_records})}}}

@@ -13,6 +13,7 @@ def main(argv=None):
     demo.add_argument('--directory', default='outputs/demo')
     demo.add_argument('--muriel', action='store_true')
     demo.add_argument('--planning', action='store_true', help='Show the simplified urban-planning workflow')
+    demo.add_argument('--crs',default='EPSG:32631',help='CRS for the artificial planning example only; real projects require their own suitable CRS')
     run = sub.add_parser('run', help='Run a registered configuration')
     run.add_argument('config')
     for command in (demo, run):
@@ -23,6 +24,14 @@ def main(argv=None):
     validate.add_argument('--json', action='store_true', help='Machine-readable validation result')
     init = sub.add_parser('init', help='Create a starter configuration without overwriting a file')
     init.add_argument('config')
+    init.add_argument('--area',default='Study area')
+    init.add_argument('--scenario',default='REQUIRED')
+    init.add_argument('--crs',default='',help='Projected processing CRS in metres, appropriate to this area')
+    init.add_argument('--jurisdiction',default='')
+    profile=init.add_mutually_exclusive_group()
+    profile.add_argument('--profile',choices=['generic','koeln'],default='generic')
+    profile.add_argument('--profile-file',help='Registered custom profile JSON; rules and citations are embedded into the run')
+    init.add_argument('--depth-units',choices=['cm','m'])
     inventory=sub.add_parser('inventory',help='Inspect GIS files and missing components without altering sources')
     inventory.add_argument('files',nargs='+');inventory.add_argument('--output',default=None)
     prep=sub.add_parser('prepare',help='Reproject, clip and align inputs using a documented preparation job')
@@ -32,8 +41,15 @@ def main(argv=None):
     try:
         if args.command == 'init':
             from .configuration import planning_config
+            config=planning_config(area_label=args.area,scenario=args.scenario,crs=args.crs,jurisdiction=args.jurisdiction,profile=args.profile)
+            config['flood']['units']=args.depth_units
+            if args.profile_file:
+                from .profiles import validate_policy
+                data=json.loads(Path(args.profile_file).read_text(encoding='utf-8-sig'))
+                config['policy']=validate_policy(data.get('policy',data))
+                config['jurisdiction']=args.jurisdiction or config['policy']['municipality']
             with Path(args.config).open('x', encoding='utf-8') as f:
-                json.dump(planning_config(), f, indent=2, ensure_ascii=False)
+                json.dump(config, f, indent=2, ensure_ascii=False)
             print(f'Starter saved: {args.config}. Select input files before running; gui offers a form.')
             return 0
         if args.command != 'gui':
@@ -63,10 +79,10 @@ def main(argv=None):
             print(json.dumps(result.as_dict(), indent=2) if args.json else result.text())
             return 0 if result.ok else 2
         if args.command == 'demo':
-            from .demo import create_demo, create_muriel_demo, create_planning_demo
+            from .demo import create_demo, create_muriel_demo, create_area_demo
             if args.planning and args.muriel:
                 raise ValueError('Choose one demonstration: --planning or --muriel.')
-            config = (create_planning_demo if args.planning else create_muriel_demo if args.muriel else create_demo)(Path(args.directory).resolve())
+            config = create_area_demo(Path(args.directory).resolve(),crs=args.crs) if args.planning else (create_muriel_demo if args.muriel else create_demo)(Path(args.directory).resolve())
         else:
             config = Path(args.config).resolve()
         checked = inspect_config(config)

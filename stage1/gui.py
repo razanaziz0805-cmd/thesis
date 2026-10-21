@@ -1,5 +1,6 @@
 """Native QGIS guided setup. No web server, account or JSON editing required."""
 from datetime import datetime
+from copy import deepcopy
 import html
 import json
 from pathlib import Path
@@ -14,13 +15,15 @@ from qgis.PyQt.QtWidgets import (
     QProgressBar, QPushButton, QScrollArea, QSpinBox, QTabWidget, QTextBrowser, QDialogButtonBox,
     QVBoxLayout, QWidget, QInputDialog,
 )
-from qgis.core import Qgis, QgsProject, QgsProviderRegistry, QgsRasterLayer, QgsVectorLayer
-from qgis.gui import QgsFieldComboBox, QgsMapLayerComboBox
+from qgis.core import Qgis, QgsCoordinateReferenceSystem, QgsProject, QgsProviderRegistry, QgsRasterLayer, QgsVectorLayer
+from qgis.gui import QgsFieldComboBox, QgsMapLayerComboBox, QgsProjectionSelectionWidget
 
 from .catalogue import DESIGNS
 from .configuration import resolve_config, starter_config
 from .preflight import inspect_config
 from .runtime import RunCancelled
+from .profiles import profile_template, validate_policy
+from .engine import MURIEL_DEFAULTS
 
 
 def file_spec(layer):
@@ -116,14 +119,29 @@ class StageOneDialog(QDialog):
         registered.addWidget(self.open_config); registered.addWidget(self.new_button); outer.addLayout(registered)
         self.tabs = QTabWidget(); outer.addWidget(self.tabs, 1)
         self.input_form, self.input_page = self.page('1 · Inputs')
-        self.area = QLineEdit('Köln-Kalk'); self.name = QLineEdit('KALK_SRI5')
-        self.scenario = QLineEdit('SRI5')
-        self.period = QSpinBox(); self.period.setRange(0,100000); self.period.setValue(30); self.period.setSpecialValueText('Unconfirmed')
-        self.units = QComboBox(); self.units.addItem('Centimetres (cm)', 'cm'); self.units.addItem('Metres (m)', 'm')
+        self.area = QLineEdit(); self.area.setPlaceholderText('Name of your study area'); self.name = QLineEdit('STUDY_RUN')
+        self.scenario = QLineEdit(); self.scenario.setPlaceholderText('Actual event identifier from the flood provider')
+        self.period = QSpinBox(); self.period.setRange(0,100000); self.period.setValue(0); self.period.setSpecialValueText('Unconfirmed')
+        self.units = QComboBox(); self.units.addItem('Choose depth units…',None); self.units.addItem('Centimetres (cm)', 'cm'); self.units.addItem('Metres (m)', 'm')
         self.threshold = QDoubleSpinBox(); self.threshold.setRange(0,100000); self.threshold.setDecimals(2); self.threshold.setValue(10); self.threshold.setSuffix(' cm')
         for label, widget in [('Study area name',self.area),('Run name',self.name),('Flood scenario',self.scenario),('Stated return period (years)',self.period),('Flood depth units',self.units),('Intervention threshold',self.threshold)]:
             self.input_form.addRow(label, widget)
+        self.processing_crs = QgsProjectionSelectionWidget()
+        self.processing_crs.setOptionVisible(QgsProjectionSelectionWidget.CrsNotSet,True)
+        self.processing_crs.setNotSetText('Choose a local projected CRS…')
+        self.processing_crs.setCrs(QgsCoordinateReferenceSystem())
+        self.input_form.addRow('Processing CRS · projected metres', self.processing_crs)
+        self.jurisdiction = QLineEdit(); self.jurisdiction.setPlaceholderText('Governing city / region / country; optional for generic planning')
+        self.input_form.addRow('Rule jurisdiction',self.jurisdiction)
+        self.selected_policy = profile_template()
+        policy_row = QWidget(); policy_layout = QHBoxLayout(policy_row); policy_layout.setContentsMargins(0,0,0,0)
+        self.policy_combo = QComboBox(); self.policy_combo.addItem('Generic · local rules unconfigured','generic'); self.policy_combo.addItem('Köln · thesis reference profile','koeln')
+        self.policy_combo.currentIndexChanged.connect(self.select_policy)
+        self.load_policy_button = QPushButton('Load local profile…'); self.load_policy_button.clicked.connect(self.load_local_policy)
+        policy_layout.addWidget(self.policy_combo,1); policy_layout.addWidget(self.load_policy_button)
+        self.input_form.addRow('Local rules',policy_row)
         self.flood = LayerPicker(raster=True); self.boundary = LayerPicker()
+        self.boundary.combo.layerChanged.connect(self.suggest_crs)
         self.input_form.addRow('Flood depth layer · required',self.flood)
         self.depth_field = QgsFieldComboBox(); self.id_field = QgsFieldComboBox()
         self.band=QSpinBox(); self.band.setRange(1,1)
@@ -139,7 +157,7 @@ class StageOneDialog(QDialog):
         self.input_form.addRow('Workspace folder · required',folder)
         self.auto_prepare=QCheckBox('Automatically reproject, clip and align inputs to the native flood grid')
         self.auto_prepare.setChecked(True);self.input_form.addRow(self.auto_prepare)
-        self.input_form.addRow(self.note('Flood maps must contain numeric depths. Default processing CRS: EPSG:25832. The SRI/return-period relationship needs provider confirmation.'))
+        self.input_form.addRow(self.note('Choose a projected CRS in metres appropriate to this area. A declared input CRS can populate the selection; unknown CRSs are never guessed. Local rules and event definitions do not transfer automatically. The 10 cm threshold is a configurable project assumption.'))
         self.designs = QListWidget(); self.designs.setMinimumHeight(145)
         for design, values in DESIGNS.items():
             item = QListWidgetItem(values[0]); item.setData(Qt.UserRole,design); item.setFlags(item.flags() | Qt.ItemIsUserCheckable); item.setCheckState(Qt.Checked); self.designs.addItem(item)
@@ -149,7 +167,7 @@ class StageOneDialog(QDialog):
         self.site_evidence = LayerPicker(); self.evidence_join = QComboBox(); self.evidence_join.addItems(['Spatial overlay','Join by unit_id'])
         self.evidence_form.addRow('Prepared site/groundwater evidence', self.site_evidence)
         self.evidence_form.addRow('Evidence join method', self.evidence_join)
-        self.gw_state = QLineEdit('UNKNOWN_DESIGN_GROUNDWATER'); self.datum = QLineEdit(); self.datum.setPlaceholderText('For example: verified DHHN2016/NHN')
+        self.gw_state = QLineEdit('UNKNOWN_DESIGN_GROUNDWATER'); self.datum = QLineEdit(); self.datum.setPlaceholderText('Documented common height datum / reference')
         self.evidence_form.addRow('Design groundwater scenario',self.gw_state); self.evidence_form.addRow('Common vertical datum',self.datum)
         self.profile_reviewed=QCheckBox('Local rule profile checked against current primary sources and authority requirements')
         self.profile_reference=QLineEdit(); self.profile_reference.setPlaceholderText('Dated local review reference; required if checked')
@@ -160,7 +178,14 @@ class StageOneDialog(QDialog):
         self.owner_values = {}
         for key,label,default in [('municipal','Municipal values','CITY'),('private','Private values','PRIVATE'),('other_public','Other public values','OTHER_PUBLIC'),('unknown','Unknown values','UNKNOWN')]:
             widget=QLineEdit(default); widget.setPlaceholderText('Exact values, separated with ;'); self.owner_values[key]=widget; self.evidence_form.addRow(label,widget)
-        self.muriel_enabled=QCheckBox('Include MURIEL public-space screening'); self.muriel_enabled.setChecked(True); self.evidence_form.addRow(self.muriel_enabled)
+        self.muriel_enabled=QCheckBox('Include MURIEL public-space screening'); self.muriel_enabled.setChecked(False); self.evidence_form.addRow(self.muriel_enabled)
+        self.muriel_criteria = {}
+        for key,label in [('min_area_m2','Minimum flood area (m²)'),('min_max_depth_m','Depth criterion (m)'),('receptor_distance_m','Receptor distance (m)'),('municipal_distance_m','Municipal land distance (m)'),('destination_distance_m','Destination search distance (m)'),('protect_overlap_fraction','Protect-retention overlap (0–1)')]:
+            field=QDoubleSpinBox(); field.setRange(0,1 if key=='protect_overlap_fraction' else 1000000); field.setDecimals(3); field.setValue(MURIEL_DEFAULTS[key])
+            self.muriel_criteria[key]=field; self.evidence_form.addRow('MURIEL · '+label,field)
+        self.muriel_footprint=QComboBox(); self.muriel_footprint.addItems(['depth_mask','inundation_maximum']); self.evidence_form.addRow('MURIEL footprint interpretation',self.muriel_footprint)
+        self.muriel_reference=QLineEdit(); self.muriel_reference.setPlaceholderText('Dated project adoption / planning criteria reference for this jurisdiction')
+        self.evidence_form.addRow('MURIEL local adoption reference',self.muriel_reference)
         self.owner_verified=QCheckBox('Municipal ownership has been verified'); self.evidence_form.addRow(self.owner_verified)
         self.inventory = {}
         for key,label in [('land','Ownership coverage'),('receptors','Buildings and sensitive-object footprints'),('roads','Road footprint polygons'),('usable_space','Assessed multifunctional destination spaces')]:
@@ -174,14 +199,14 @@ class StageOneDialog(QDialog):
         self.inventory['usable_space'][0].combo.layerChanged.connect(self.destination_id.setLayer)
         self.inventory['usable_space'][0].combo.layerChanged.connect(self.usable_field.setLayer)
         self.evidence_form.addRow('Destination unique ID field', self.destination_id); self.evidence_form.addRow('Usable field (true/false/NULL)', self.usable_field)
-        self.evidence_form.addRow(self.note('MURIEL starts at >2,000 m² and >30 cm. Coverage and verification boxes are evidence declarations: select them only after review. Nearby space remains a routing investigation without route evidence.'))
+        self.evidence_form.addRow(self.note('The displayed MURIEL values are the Porz/Eil reference example, not universal rules. Register locally appropriate values and a dated adoption reference. Coverage and verification boxes are evidence declarations. Proximity does not prove routing.'))
         results=QWidget(); layout=QVBoxLayout(results); self.tabs.addTab(results,'3 · Run && results')
         self.export_maps=QCheckBox('Print PNG maps and PDF atlases'); self.export_maps.setChecked(True); layout.addWidget(self.export_maps)
         self.duplicate_button=QPushButton('Copy registered configuration for a new threshold run…'); self.duplicate_button.setEnabled(False)
         self.duplicate_button.clicked.connect(self.duplicate_configuration); layout.addWidget(self.duplicate_button)
         layout.addWidget(self.note('For a faster first run, turn printing off. The QGIS project, all decisions and source references are still produced.'))
         self.messages=QTextBrowser(); self.messages.setOpenExternalLinks(True); layout.addWidget(self.messages,1)
-        self.messages.setText('Choose the flood depth layer and study boundary, then click Check inputs. No actual Köln-Kalk GIS data are bundled. You can also open an existing registered configuration.')
+        self.messages.setText('Choose your flood event, units, study boundary and processing CRS, then check inputs. Generic local rules stay conditional. You can load a registered local profile or an existing configuration.')
         buttons=QHBoxLayout()
         self.report_button=QPushButton('Open report'); self.report_button.setEnabled(False); self.report_button.clicked.connect(lambda: self.open_result('report.html'))
         self.folder_button=QPushButton('Open results folder'); self.folder_button.setEnabled(False); self.folder_button.clicked.connect(lambda: self.open_result(''))
@@ -215,7 +240,34 @@ class StageOneDialog(QDialog):
         path=QFileDialog.getExistingDirectory(self,'Choose a workspace folder')
         if path: self.folder.setText(path)
 
+    def suggest_crs(self,layer):
+        if layer and not self.processing_crs.crs().isValid():
+            crs=layer.crs()
+            if crs.isValid() and not crs.isGeographic() and crs.mapUnits()==Qgis.DistanceUnit.Meters:
+                self.processing_crs.setCrs(crs)
+
+    def select_policy(self):
+        kind=self.policy_combo.currentData()
+        if kind in ('generic','koeln'):
+            self.selected_policy=profile_template(kind)
+            if kind=='koeln' and not self.jurisdiction.text().strip():self.jurisdiction.setText('Koeln')
+            self.profile_reviewed.setChecked(False); self.profile_reference.clear()
+
+    def load_local_policy(self):
+        path,_=QFileDialog.getOpenFileName(self,'Load a registered local rule profile','','JSON (*.json)')
+        if not path:return
+        try:
+            data=json.loads(Path(path).read_text(encoding='utf-8-sig')); policy=validate_policy(data.get('policy',data))
+            self.selected_policy=policy
+            self.policy_combo.addItem('Local · '+policy['profile_id'],'custom');self.policy_combo.setCurrentIndex(self.policy_combo.count()-1)
+            if not self.jurisdiction.text().strip():self.jurisdiction.setText(policy['municipality'])
+            self.profile_reviewed.setChecked(policy['profile_reviewed']);self.profile_reference.setText(policy['profile_review_ref'] or '')
+        except Exception as exc:
+            from qgis.PyQt.QtWidgets import QMessageBox
+            QMessageBox.warning(self,'Cannot load local profile',str(exc))
+
     def flood_changed(self, layer):
+        self.suggest_crs(layer)
         vector=isinstance(layer,QgsVectorLayer)
         for widget in (self.depth_field,self.id_field):
             widget.setEnabled(vector); widget.setLayer(layer if vector else None)
@@ -271,16 +323,20 @@ class StageOneDialog(QDialog):
             else: flood['band']=self.band.value()
         workspace=Path(self.folder.text()).expanduser().resolve()
         config=starter_config(flood=flood,study_area=self.boundary.spec(),output_dir=workspace/'runs'/(slug+'_'+self.token),area_label=self.area.text().strip(),scenario=self.scenario.text().strip(),threshold_cm=self.threshold.value())
+        config['crs']=self.processing_crs.crs().authid() or self.processing_crs.crs().toWkt()
+        config['jurisdiction']=self.jurisdiction.text().strip()
+        config['policy']=deepcopy(self.selected_policy); config['policy']['municipality']=config['jurisdiction']
         config['run_id']=slug+'_'+self.token
         config['preparation']={'enabled':self.auto_prepare.isChecked()}
         config['stated_return_period_years']=self.period.value() or None
+        config['return_period_source']='User-entered event metadata; provider verification outstanding.' if self.period.value() else None
+        config['policy'].update(profile_reviewed=self.profile_reviewed.isChecked(),profile_review_ref=self.profile_reference.text().strip() or None)
+        if self.profile_reviewed.isChecked() and not config['policy']['profile_review_ref']:
+            raise ValueError('Enter the dated local rule review reference, or leave the review unconfirmed.')
         if getattr(self, 'mode', None) is not None and self.mode.currentData() == 'planning':
             return config
         config['groundwater_scenario_id']=self.gw_state.text().strip()
         config['vertical_datum']=self.datum.text().strip() or None
-        config['policy'].update(profile_reviewed=self.profile_reviewed.isChecked(),profile_review_ref=self.profile_reference.text().strip() or None)
-        if self.profile_reviewed.isChecked() and not config['policy']['profile_review_ref']:
-            raise ValueError('Enter the dated local rule review reference, or leave the review unconfirmed.')
         config['designs']=[self.designs.item(i).data(Qt.UserRole) for i in range(self.designs.count()) if self.designs.item(i).checkState()==Qt.Checked]
         evidence=self.site_evidence.spec()
         if evidence:
@@ -298,6 +354,12 @@ class StageOneDialog(QDialog):
             config['ownership']=owner
         m=config['muriel']; m['enabled']=self.muriel_enabled.isChecked()
         if m['enabled']:
+            m.update(thresholds={key:field.value() for key,field in self.muriel_criteria.items()},
+                     criteria_profile_id='project_muriel_v1',criteria_scope=config['jurisdiction'],criteria_adoption_ref=self.muriel_reference.text().strip() or None)
+            m['thresholds']['footprint_mode']=self.muriel_footprint.currentText()
+            if m['criteria_adoption_ref']:
+                m['criteria_source']={'citation':'Project-registered MURIEL criteria: '+m['criteria_adoption_ref'],
+                                      'locator':'Run configuration muriel.thresholds; adapted from Schwerdorf (2022)', 'url':'', 'status':'project_registered_planning_criteria'}
             if owner:
                 _,covered,ref=self.inventory['land']
                 m['municipal_land']={**owner,'municipal_values':[v for v,c in owner['mapping'].items() if c=='municipal'],

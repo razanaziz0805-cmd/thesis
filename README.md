@@ -1,95 +1,71 @@
-# Auditable NbS opportunity mapping · Stage 1
+# Transferable NbS opportunity mapping · Stage 1
 
-This repository implements the **first stage** of the thesis workflow: configurable flood-need maps, a preliminary infiltration-pathway map, **MURIEL public-space screening**, per-design opportunity maps, declared combination checks and ownership analysis. It produces a portable QGIS project, a GeoPackage with feature-level explanations, audit tables, CSV registers, PNG sheets and PDF atlases.
+A QGIS engine for the thesis workflow: flood need → preliminary pathway restrictions → NbS opportunities and MURIEL → design/combination qualification and delivery evidence. The default setup now supports **any study area with suitable input data and locally registered criteria**. Kalk is an explicit case-study configuration, not a runtime default.
 
-**Current status (v0.5):** implemented and tested on synthetic inputs, with preparation additionally exercised on supplied soil/profile/heat GIS data. A complete registered flood/suitability input set remains outstanding. The example atlas is a software demonstration, not a thesis finding. The thesis was read as research material. Schwerdorf's original MURIEL presentation was retrieved and slides 19–20 checked; other technical/regulatory references still require primary-source verification.
+**Version 0.6** separates transferable decision logic from local legal/technical values, events and coordinate systems. Read [how transfer follows the thesis](docs/TRANSFERABILITY.md) and the [short planning input table](docs/PLANNING.md). Only Stage 1 is implemented; no hydraulic, cooling, cost or Pareto result is inferred from GIS screening.
 
-The real-data configuration is [config/koeln_kalk_sri5.json](config/koeln_kalk_sri5.json): **SRI5**, **30-year return period as stated by the user**, flood input in **centimetres**, intervention threshold **≥10 cm**. Confirm the SRI/event definition against the flood provider's metadata. An SRI number is not treated as a universal return-period conversion.
+## Start in QGIS
 
-## Start with two spatial datasets
+Download the [v0.6 plugin ZIP](downloads/nbs-stage1-plugin-v0.6.zip). On GitHub select **Download raw file**, then in QGIS 3.40+ use **Plugins → Manage and Install Plugins → Install from ZIP**. Open **Plugins → NbS planning → NbS Stage 1 · opportunity mapping**. The engine is bundled; no repository path or extra server is needed.
 
-The default **planning mode** needs only a flood-depth map and study boundary. It produces connected flood action areas and a delivery/investigation register. Add one surface layer for five NbS investigation maps; ownership and heat are optional refinements. Retained concepts stay **CONDITIONAL** until designed and qualified. The original 15-variant engineering engine, MURIEL and declared physical combinations remain available under **Advanced**. See [the small-input planning guide and input table](docs/PLANNING.md).
+1. Enter the study area, actual flood-provider event and depth units.
+2. Select **boundary + numeric flood depth**, a suitable projected CRS in metres, and a workspace. Known input CRS metadata may populate the selection; an unknown CRS is never guessed.
+3. Keep **Generic · local rules unconfigured** for the first planning maps. Add surface types, ownership, heat and known exclusions when available. Load a cited local profile when ready.
+4. Check inputs, create results, open the offline report and `stage1.qgz`. Choose a map theme and use **Identify Features** for reasons, evidence, citations and next actions.
 
-## Guided QGIS setup
+The initial 10 cm screen remains configurable and explicitly project-defined. There is **no automatic SRI5, 30-year return period, EPSG:25832 or Köln rule selection**. A specific SRI label does not establish a universal return period.
 
-Install [the QGIS plugin ZIP](downloads/nbs-stage1-plugin-v0.5.zip) through **Plugins → Manage and Install Plugins → Install from ZIP**. Then open **Plugins → NbS planning → NbS Stage 1 · opportunity mapping**. Keep Planning opportunities selected, choose the two inputs, add optional context, check readiness and run. The engine is bundled; no repository path or JSON editing is needed for guided setup. See the [step-by-step user guide](docs/USER_GUIDE.md).
+## Local rules are explicit
 
-Version 0.3 adds grouped input checks, progress and cancellation, fast analysis without map printing, isolated unfinished runs, a searchable offline results dashboard and an evidence task register. Registered configurations preserve advanced evidence/combinations; the panel can copy them for a new threshold run. Spatial joins reuse coverage unions; MURIEL searches use indexed candidate filtering with exact geometry distances. Reasons, references and conservative missing-data treatment are preserved.
+| Profile | Behaviour |
+|---|---|
+| Generic (default) | No imposed numeric local thresholds or zone-code restrictions; missing criteria stay conditional |
+| Cited custom profile | Registered jurisdiction, local numbers/code mappings, rule severity, exception procedure and actual source references |
+| Köln reference | Explicit thesis case-study values and their primary/secondary-source limitations; cannot be reassigned to another jurisdiction by a review checkbox |
 
-Version 0.4 adds a [documented preparation stage](docs/PREPARATION.md): read-only inventory, explicit CRS corrections, reprojection, vector clipping, native-grid preservation or configured alignment, NoData handling and a portable input-review project. Open **Prepare GIS data…** in the QGIS panel, or enable automatic preparation before screening. Incomplete attributes, physical units and engineering evidence are never invented.
+Use [local_profile.template.json](config/local_profile.template.json) to register a reusable local profile. [koeln_profile.json](config/koeln_profile.json) and [koeln_kalk_sri5.json](config/koeln_kalk_sri5.json) remain available as named case-study material. Generic method citations retain the thesis's proper title; this does not impose its study geography.
 
-## Run in this cloud environment
+MURIEL retains the Porz/Eil example as an optional reference preset. Local values, scope, source and adoption are registered separately. Unadopted or wrong-scope criteria remain EVIDENCE_GAP. MURIEL does not confer infiltration permission or prove routing.
 
-QGIS 3.40.6 and GDAL 3.10.3 are already available. Use the **QGIS Python interpreter**; the default virtual-environment Python does not contain PyQGIS.
+## Outputs for planning and qualification
+
+- Connected flood action areas, mapped depth/area, extent uncertainty and source-unit links.
+- Five conditional NbS planning families from surface classes, with provisional water pathways and next investigations.
+- Ownership shares/delivery actions and documented flood/heat overlap, retaining unknowns and conflicts.
+- Preliminary groundwater/soil/protection evidence, optional full MURIEL, and 15 explicit design variants in advanced mode.
+- Declared physical combination checks with source/footprint/storage accounting and no additive hydraulic-benefit assumption.
+- Portable QGIS project, GeoPackage, feature reasons/references, CSV registers, offline report and optional A3 PNG/PDF sheets.
+- `rule_profile.json` plus input/configuration/code hashes and software versions, documenting the actual governing criteria used.
+
+Every retained planning concept is **CONDITIONAL** until qualified. Known incompatible pathways remain FAIL; a lined alternative has its own checks. NoData and absent evidence never become a pass. Heat is context/co-benefit evidence, not an invented cooling coefficient or a means of offsetting a hard failure.
+
+## Preparation and larger inputs
+
+Automatic preparation registers source CRS, clips vectors, preserves the flood native grid by default, handles NoData and creates an input-review project. Explicit CRS correction requires evidence; source files are preserved. See [PREPARATION.md](docs/PREPARATION.md). The current 250,000-unit default guard remains: larger/high-resolution studies need a documented partition strategy, not silent coarsening.
+
+## Run from source
+
+Use QGIS's Python environment. In this cloud environment:
 
 ```bash
 cd /workspace/thesis
 bash scripts/check_environment.sh
 bash scripts/test.sh
-QT_QPA_PLATFORM=offscreen XDG_CACHE_HOME=/tmp/thesis-qgis-cache \
-  /usr/bin/python3 -m stage1 demo --planning --directory outputs/my-first-demo
+/usr/bin/python3 -m stage1 init project.json \
+  --area "My area" --scenario "PROVIDER_EVENT_ID" \
+  --crs "EPSG:32631" --jurisdiction "My authority" --depth-units cm
+/usr/bin/python3 -m stage1 validate project.json
+/usr/bin/python3 -m stage1 run project.json
 ```
 
-Each run requires a new output directory and preserves previous results. Open `outputs/my-first-demo/results/report.html`, or load `stage1.qgz` in QGIS. Choose a **map theme** to switch maps. Use **Identify Features** on the selected spatial layer and expand `explanation`: every rule reports the observed value, expected condition, status, citation, source locator/link, evidence reference, responsible party and closure action. The `decision_audit` table contains one row per rule evaluation.
+Choose a CRS appropriate to the actual location; EPSG:32631 is just an example. Supply dataset paths/source metadata before validation. Use `--profile-file local_profile.json` for registered local criteria. Runs preserve previous folders; cancellation/failure does not publish unfinished results.
 
-The separate `demo --muriel` demonstration produces **five dedicated map sheets**, `muriel_atlas.pdf`, a 23-sheet full Stage 1 atlas and decision/connection registers. Read [docs/MURIEL.md](docs/MURIEL.md) for the screening sequence and the distinction between the original presentation's >30 cm depth mask and the thesis's maximum-depth wording. Both footprint modes are implemented and explicitly registered.
+For a neutral software demonstration:
 
-## Use real data
-
-For the first planning run, use the [planning template](config/planning.example.json) or guided panel. The following detailed evidence steps apply when qualifying actual designs; they are not prerequisites for the first planning maps.
-
-1. Supply the SRI5 flood-depth raster and study-area polygon. A nonoverlapping polygon/grid layer with depth attributes is also supported. See [the input specification](docs/INPUTS.md).
-2. Copy the real-data configuration to a new run configuration. Set paths, source metadata, scenario, units, output directory and confirmed vertical datum. Keep `profile_reviewed=false` until primary sources and local conditions have been checked.
-3. Add groundwater/soil/protection/land-use and delivery evidence using ID joins, conservative polygon overlays, aligned raster sampling, or derived distance inputs. Missing data remain conditional. Ownership and combination examples are in [config/overlay_examples.json](config/overlay_examples.json).
-4. Run:
-
-   ```bash
-   /usr/bin/python3 -m stage1 run config/your_run.json
-   ```
-
-5. Read the map limitations, review fail/conditional records and their closure requirements, and preserve the run manifest with its input/config/code checksums. Re-run to a new directory when data or thresholds change.
-
-For example, changing `flood_threshold_m` from `0.10` to `0.20` changes the flood-need screen to 20 cm. It does not remove low-depth upstream source-control opportunities from the NbS analysis.
-
-## Use QGIS Processing
-
-In QGIS, add [scripts/qgis_stage1_processing.py](scripts/qgis_stage1_processing.py) using **Processing Toolbox → Scripts → Add Script to Toolbox**. Run **NbS Stage 1 · auditable opportunity maps**; select this repository folder and a run JSON. The algorithm creates a separate output project and preserves the current QGIS project. The script can be included as one step in a QGIS graphical model or batch run.
-
-Alternatively, in the QGIS Python console:
-
-```python
-import sys
-sys.path.insert(0, "/path/to/thesis")
-from stage1.gis import run
-output = run("/path/to/thesis/config/your_run.json")
+```bash
+/usr/bin/python3 -m stage1 demo --planning --crs EPSG:32734 --directory outputs/transfer-demo
 ```
 
-Open the resulting project after saving your current work. On Windows/macOS use the Python environment shipped with your QGIS installation, not an unrelated `pip install qgis` environment. The atlas merger uses Poppler `pdfunite`; if unavailable, individual PDF sheets are retained.
+The generated data and maps are synthetic. The separate `demo --muriel` retains the thesis's explicit local-screen fixture. QGIS Processing/model integration remains available through [scripts/qgis_stage1_processing.py](scripts/qgis_stage1_processing.py).
 
-## What is automated
-
-| Step | Outputs / interpretation |
-|---|---|
-| Flood need | Original raster cells, or supplied nonoverlapping polygons; centimetres converted to metres; configurable inclusive threshold; NoData stays unknown |
-| Groundwater | Preliminary risk/pathway screen; no final PASS without a specific module base; design-specific separation uses groundwater state, uncertainty and common vertical datum |
-| MURIEL | Dissolved flood footprints, >2,000 m² / >0.30 m tests, receptor adjacency, municipal road exclusion, usable-space search, ≥70% retention overlap, and evidence-backed routing branches |
-| NbS | Thesis palette represented by 15 explicit design variants; all applicable gates checked; reasons and references stored for every feature |
-| Combinations | Declared modules, directed links, spatial allocations, source fractions, shared storage and evidence gates; separate maps preserve overlapping alternatives |
-| Ownership | Municipal/private/other public/unknown area shares; mixed units and overlapping cadastral claims retained |
-| Evidence | Input hashes, software versions, configuration/code hashes, run metadata and rule-level audit |
-
-Structural proof, contamination clearance, groundwater investigation, authority approval and verified routing are **evidence inputs**, not conclusions that can be inferred from map colours. Numerical checks and GIS joins automate their application; missing proof never becomes a pass.
-
-## Interpretation and transfer to another NRW area
-
-Read [the rule register and methodology](docs/METHOD.md) before using a map for planning. `FAIL` takes precedence over `CONDITIONAL`, which takes precedence over `ADMISSIBLE`. An admissible record means the represented **screening** gates were evidenced, not construction permission or measured flood benefit. Non-infiltrating variants remain separate designs with their own structural, quality, outlet and maintenance gates.
-
-The sequence, schema, rule audit and cartography are transferable. Rainfall, groundwater, parcel data, asset conditions, MURIEL criteria and authority requirements are local. A municipality mismatch without a reviewed local profile raises an error. Cologne values must not silently become NRW-wide rules.
-
-**Stages 2 and 3 are not implemented.** Stage 2 will assess effects in Scenarify. Stage 3 will compare verified flood outcomes and lifecycle cost; the thesis currently treats heat as a separately reported co-benefit, while the user's proposed heat objective remains a decision for Stage 3. No Scenarify-ready hydraulic parameters, flood-reduction estimates, heat reductions, costs or Pareto results are invented by this stage.
-
-Start with the [short planning input table](docs/PLANNING.md). The [detailed data-request register](docs/data_request.csv) is for subsequent engineering qualification. Real groundwater admissibility cannot be established from a citywide average or an undated groundwater-depth image.
-
-## Download the prepared demonstration
-
-The [downloads folder](downloads/README.md) contains the v0.5 planning plugin, complete example/workflow ZIP, ten-sheet planning atlas and previews, alongside the earlier MURIEL examples. Use GitHub’s **Download raw file** button on each file, or **Code → Download ZIP** for the entire repository. The files are stored with the repository and do not depend on chat download links.
+See [USER_GUIDE.md](docs/USER_GUIDE.md), [INPUTS.md](docs/INPUTS.md), [METHOD.md](docs/METHOD.md), [MURIEL.md](docs/MURIEL.md), and [validation evidence](docs/VALIDATION.md). The [downloads folder](downloads/README.md) supplies the installable plugin and a portable synthetic example. Private uploaded GIS files and prepared real-data outputs are excluded from public packages. Actual legal applicability, site clearance and hydraulic performance still require their corresponding evidence.

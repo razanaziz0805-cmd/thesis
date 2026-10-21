@@ -145,7 +145,7 @@ class PreparationTests(unittest.TestCase):
         from stage1.gis import run
         from osgeo import ogr
         import sqlite3
-        config=starter_config({'path':str(self.raster),'type':'raster','units':'cm'}, {'path':str(self.vector),'layer':'boundary'},self.root/'results')
+        config=starter_config({'path':str(self.raster),'type':'raster','units':'cm'}, {'path':str(self.vector),'layer':'boundary'},self.root/'results',scenario='TEST_EVENT',crs='EPSG:25832')
         config['designs']=['green_roof'];config['muriel']['enabled']=False;config['preparation']={'enabled':True}
         source=ogr.GetDriverByName('GPKG').CreateDataSource(str(self.root/'evidence.gpkg'))
         layer=source.CreateLayer('evidence',srs=self.srs,geom_type=ogr.wkbPolygon)
@@ -230,7 +230,7 @@ class PreparationTests(unittest.TestCase):
     def test_regridding_cannot_reuse_old_combination_unit_ids(self):
         from stage1.configuration import starter_config
         from stage1.preparation import prepare_run
-        config=starter_config({'path':str(self.raster),'type':'raster','units':'cm','resampling_evidence_ref':'Reviewed grid change'}, {'path':str(self.vector),'layer':'boundary'},self.root/'changed')
+        config=starter_config({'path':str(self.raster),'type':'raster','units':'cm','resampling_evidence_ref':'Reviewed grid change'}, {'path':str(self.vector),'layer':'boundary'},self.root/'changed',scenario='TEST_EVENT',crs='EPSG:25832')
         config['preparation']={'enabled':True,'grid':{'cell_size_m':20}}
         config['combinations']=[{'id':'old_grid_portfolio','modules':[]}]
         source=self.root/'changed.json';source.write_text(json.dumps(config))

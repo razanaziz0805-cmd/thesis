@@ -51,9 +51,9 @@ def inspect_config(source, base_dir=None):
         return result
     from osgeo import gdal
     from qgis.core import Qgis, QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject, QgsVectorLayer, QgsWkbTypes
-    crs = QgsCoordinateReferenceSystem(config.get('crs', 'EPSG:25832'))
+    crs = QgsCoordinateReferenceSystem(config['crs'])
     if not crs.isValid() or crs.isGeographic() or crs.mapUnits() != Qgis.DistanceUnit.Meters:
-        result.add('ERROR', 'Processing CRS', 'A projected CRS in metres is required.', 'Use EPSG:25832 for this NRW workflow.')
+        result.add('ERROR', 'Processing CRS', 'A projected CRS in metres is required.', 'Choose a local projected CRS suitable for this study area; geographic degrees and projected feet need an explicit transformation.')
     output = Path(config['output_dir'])
     if output.exists():
         result.add('ERROR', 'Output folder', f'Already exists: {output}', 'Choose a new run folder; earlier results are preserved.')

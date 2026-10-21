@@ -286,7 +286,7 @@ def prepare(job_source,progress=None,cancelled=None):
     if any(not isinstance(i,str) or not re.fullmatch(r'[A-Za-z][A-Za-z0-9_]*',i) or i=='study_area' for i in ids) or len(set(ids))!=len(ids):raise ValueError('Each dataset needs a unique id using letters, digits and underscores.')
     for spec in [job['study_area'],*datasets,*([job['grid']['master']] if (job.get('grid') or {}).get('master') else [])]:
         spec['path']=str((base/spec['path']).resolve())
-    target=_srs(job.get('target_crs','EPSG:25832'))
+    target=_srs(job.get('target_crs'))
     if not target.IsProjected() or abs(target.GetLinearUnits()-1)>1e-8:raise ValueError('Target CRS must be projected in metres.')
     destination=(base/job['output_dir']).resolve()
     if destination.exists():raise ValueError(f'Preparation output already exists: {destination}. Choose a new folder.')
@@ -378,10 +378,12 @@ def prepare_run(config_source, progress=None, cancelled=None):
         elif item['type']=='raster':item['kind']='categorical' if item.get('units')=='category' else 'continuous'
         datasets.append(item)
     m=config.get('muriel') or {}
-    required_buffer=(m.get('thresholds') or {}).get('destination_distance_m',100) if m.get('enabled') else 0
+    from .engine import muriel_settings
+    criteria=muriel_settings(m.get('thresholds')) if m.get('enabled') else {}
+    required_buffer=max((criteria.get(key,0) for key in ('receptor_distance_m','municipal_distance_m','destination_distance_m')),default=0)
     buffer=max(float(options.get('search_buffer_m',100)),float(required_buffer))
     job={'study_area':deepcopy(config['study_area']),'datasets':datasets,
-         'target_crs':config.get('crs','EPSG:25832'),'output_dir':str(output),'search_buffer_m':buffer}
+         'target_crs':config['crs'],'output_dir':str(output),'search_buffer_m':buffer}
     if flood['type']=='raster':job['grid']={**options.get('grid',{}),'master':deepcopy(flood)}
     prepared=prepare(job,progress,cancelled)
     manifest=json.loads((prepared/'preparation_manifest.json').read_text())

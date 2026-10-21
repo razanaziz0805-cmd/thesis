@@ -1,0 +1,65 @@
+{
+  "profile_id": "koeln_thesis_provisional_v1",
+  "profile_kind": "koeln",
+  "rule_scope": "Koeln",
+  "municipality": "Koeln",
+  "profile_reviewed": false,
+  "profile_review_ref": null,
+  "groundwater_preferred_m": 1.0,
+  "groundwater_floor_m": 0.5,
+  "neighbour_setback_m": 2.0,
+  "basement_recommended_m": 6.0,
+  "asset_clearance_m": 1.0,
+  "protection_zones": {
+    "excluded": [
+      "I",
+      "II"
+    ],
+    "outer": [
+      "III",
+      "IIIA",
+      "IIIB"
+    ],
+    "outside": [
+      "OUTSIDE"
+    ],
+    "shaft_excluded": [
+      "I",
+      "II",
+      "III",
+      "IIIA",
+      "IIIB"
+    ]
+  },
+  "sewer_strip_bands": [
+    {
+      "min_diameter_cm": 0.0,
+      "total_width_m": 6.0
+    },
+    {
+      "min_diameter_cm": 70.0,
+      "total_width_m": 7.5
+    },
+    {
+      "min_diameter_cm": 200.0,
+      "total_width_m": 10.0
+    }
+  ],
+  "groundwater_intermediate_action": "EXCEPTION",
+  "groundwater_exception_fields": [
+    "low_pollution_runoff",
+    "groundwater_exception_approved",
+    "groundwater_standard_confirmed"
+  ],
+  "neighbour_setback_recommended": false,
+  "basement_setback_recommended": true,
+  "asset_clearance_recommended": false,
+  "authority_label": "Stadt Köln / StEB Köln",
+  "rule_sources": {
+    "infiltration": "KOELN2022",
+    "groundwater": "DWA_SUMMARY",
+    "assets": "STEB2025",
+    "roof": "ROOF2026"
+  },
+  "references": {}
+}

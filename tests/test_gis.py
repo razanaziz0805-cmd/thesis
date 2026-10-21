@@ -113,7 +113,7 @@ class GISTests(unittest.TestCase):
         unit = QgsGeometry.fromRect(QgsRectangle(0, 0, 100, 100))
         tiny = QgsGeometry.fromRect(QgsRectangle(0, 0, 1, 1))
         idx, records = indexed([(tiny, {'zone': 'II', 'clean': 0})])
-        result = join_evidence(unit, idx, records, {'protection_zone': 'zone', 'receiving_ground_clean': 'clean'})
+        result = join_evidence(unit, idx, records, {'protection_zone': 'zone', 'receiving_ground_clean': 'clean'}, zone_priority=['I','II'])
         self.assertEqual(result, {'protection_zone': 'II', 'receiving_ground_clean': False})
 
     def test_aligned_raster_values_and_design_depth_are_derived_without_approval(self):

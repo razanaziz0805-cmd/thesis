@@ -24,5 +24,5 @@ def build(target):
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('target',nargs='?',default='downloads/nbs-stage1-plugin-v0.5.zip')
+    parser.add_argument('target',nargs='?',default='downloads/nbs-stage1-plugin-v0.6.zip')
     print(build(parser.parse_args().target))

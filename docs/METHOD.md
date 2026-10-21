@@ -1,6 +1,8 @@
 # Method, rule provenance and release limits
 
-The default v0.5 panel uses [Phase C planning mode](PLANNING.md), with two required spatial datasets and five conditional concept families. The detailed admissibility, design and combination rules below describe **advanced engineering qualification**; they are retained for Phase D rather than required to start the first planning map.
+The default v0.6 panel uses [Phase C planning mode](PLANNING.md), with two required spatial datasets and five conditional concept families. The detailed admissibility, design and combination rules below describe **advanced engineering qualification**; they are retained for Phase D rather than required to start the first planning map.
+
+The [transferability guide](TRANSFERABILITY.md) defines the neutral defaults, governing profiles, citation binding, MURIEL adoption and migration. The Köln numbers below are an explicit reference case, not generic core values.
 
 ## Thesis basis
 

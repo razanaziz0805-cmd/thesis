@@ -1,12 +1,12 @@
 # Stage 1 input specification
 
-Version 0.5 defaults to a [small-input planning workflow](PLANNING.md): only boundary and flood depths are required; one surface layer adds typology opportunities, with ownership and heat optional. The detailed fields below apply to engineering qualification.
+Version 0.6 defaults to a [small-input planning workflow](PLANNING.md): only boundary and flood depths are required; one surface layer adds typology opportunities, with ownership and heat optional. The detailed fields below apply to engineering qualification.
 
 The engine can prepare saved inputs before screening. See [automatic preparation](PREPARATION.md) for CRS corrections, clipping and grid alignment. The specifications below describe the prepared analysis inputs.
 
 ## Minimum to produce an actual first map
 
-Supply a **georeferenced SRI5 flood-depth GeoTIFF** and a **study-area polygon** (GeoPackage preferred). The user specifies centimetres and a stated 30-year return period. Preserve the provider's scenario/event documentation, date, resolution, depth-band definition, licence and NoData code. A screenshot or WMS picture alone does not supply numeric depth values per cell. A documented WCS/download or vector depth field can be used instead.
+Supply a **georeferenced numeric flood-depth GeoTIFF for the registered event** and a **study-area polygon** (GeoPackage preferred). Register its units (cm or m) and event metadata; the default project assumes neither an event nor a return period. SRI5/cm/30 years are specific to the separately retained original case study. Preserve the provider's scenario/event documentation, date, resolution, depth-band definition, licence and NoData code. A screenshot or WMS picture alone does not supply numeric depth values per cell. A documented WCS/download or vector depth field can be used instead.
 
 The study boundary must distinguish **Stadtteil Kalk** from the wider **Stadtbezirk Kalk**. Define any contributing-area/hydrological extension separately. Source-control candidates may lie outside the area of high flood depth; a later hydraulic domain must include relevant upstream and downstream connections.
 
@@ -14,7 +14,7 @@ Every `path` in a run JSON is relative to the **JSON file**, unless absolute. Pr
 
 ## Spatial reference and analysis units
 
-- Default horizontal CRS: **EPSG:25832**, ETRS89 / UTM 32N. The workflow requires a projected CRS in metres.
+- Select a suitable **projected CRS in metres** for the actual area. No horizontal CRS is assumed. EPSG:25832 is retained only in the explicit original case-study example.
 - Vector inputs are explicitly transformed to the processing CRS. Confirm the transformation/datum operation in source preparation for high-accuracy work.
 - Flood rasters must already be north-up in the configured CRS. Their cell origin, size and extent are retained. There is no automatic depth interpolation or claim of improved source resolution.
 - Document any preprocessing. Use nearest-neighbour for categorical classes; choose and justify an appropriate method for each continuous variable. Interpolating flood depths can move the 10 cm boundary.
@@ -31,7 +31,7 @@ For polygon flood inputs replace the flood block with:
 
 ## Evidence joins and missing information
 
-An evidence layer is a polygon layer with attributes. An **ID join** uses the analysis `unit_id`; duplicate evidence IDs are rejected. A **spatial join** intersects polygons: a scalar value is accepted only when the entire analysis unit has supporting coverage and consistent values. Mixed/uncovered values become unknown. Protection zones I–II and known contaminated/unsuitable receiving ground are retained conservatively even if they occupy only part of a cell. Distance fields use the minimum; groundwater levels and uncertainty use the maximum; module-base elevations use the minimum. Mixed vertical-datum/scenario labels remain unknown. These are conservative bounds, not invented subcell precision; split analysis units to refine a boundary.
+An evidence layer is a polygon layer with attributes. An **ID join** uses the analysis `unit_id`; duplicate evidence IDs are rejected. A **spatial join** intersects polygons: a scalar value is accepted only when the entire analysis unit has supporting coverage and consistent values. Mixed/uncovered values become unknown. Protection-zone restrictions use the selected local profile's priority codes; known restricted codes and contaminated/unsuitable receiving ground are retained even if they occupy only part of a cell. Distance fields use the minimum; groundwater levels and uncertainty use the maximum; module-base elevations use the minimum. Mixed vertical-datum/scenario labels remain unknown. These are conservative bounds, not invented subcell precision; split analysis units to refine a boundary.
 
 Explicitly map source column names with `fields: {"protection_zone":"zone_class"}`. Evidence may not overwrite analysis IDs, area or flood depth. Later evidence blocks replace their explicitly mapped fields; order them deliberately and record why. Verify coverage and time/state compatibility.
 
@@ -39,9 +39,12 @@ Use **NULL** for absent/unknown evidence. Boolean `true`/1 means documented comp
 
 ## Groundwater evidence
 
+Local thresholds, zone categories, severity and exception evidence are registered in the rule profile; [TRANSFERABILITY.md](TRANSFERABILITY.md) explains the schema. The fields below describe the evidence, not universal numeric acceptance values. `infiltration_prohibited=true` records a documented site-specific prohibition independently of zone labels.
+
+
 | Field | Meaning |
 |---|---|
-| `protection_zone` | `I`, `II`, `III`, `IIIA`, `IIIB`, `OUTSIDE`; null unknown |
+| `protection_zone` | Locally registered code crosswalk; `I`–`IIIB`/`OUTSIDE` are the Köln example; null unknown |
 | `receiving_ground_clean` | Contamination / contaminated fill investigation resolved for receiving ground |
 | `soil_infiltration_ok` | Site-scale soil/permeability assessment supports the design |
 | `runoff_quality_ok` | Quality/treatment supports the receiving pathway |
@@ -118,4 +121,4 @@ Source fractions represent **newly allocated contributing area**, not performanc
 
 ## MURIEL
 
-The real-data template enables MURIEL. See [MURIEL.md](MURIEL.md) and [the configuration fragment](../config/muriel_inputs.example.json). Register building/sensitive-object **footprints**, verified municipal land or a categorical ownership layer, polygon road footprints, locally assessed usable multifunctional spaces, and optional directed route lines with evidence. Inventories must cover the study area and its destination search extension, not stop at an administrative border. Missing inputs are conditional; a complete empty inventory is a different observation from an absent inventory. The user-defined ≥10 cm intervention screen remains independent of MURIEL's depth/area criteria.
+The neutral default disables MURIEL until it is selected; the explicit case-study template enables its registered reference screen. Local scope, adoption reference and criteria source are required for interpreted planning classes. See [MURIEL.md](MURIEL.md) and [the configuration fragment](../config/muriel_inputs.example.json). Register building/sensitive-object **footprints**, verified municipal land or a categorical ownership layer, polygon road footprints, locally assessed usable multifunctional spaces, and optional directed route lines with evidence. Inventories must cover the study area and its destination search extension, not stop at an administrative border. Missing inputs are conditional; a complete empty inventory is a different observation from an absent inventory. The user-defined ≥10 cm intervention screen remains independent of MURIEL's depth/area criteria.

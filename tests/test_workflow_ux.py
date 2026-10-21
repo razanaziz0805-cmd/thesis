@@ -127,7 +127,7 @@ class WorkflowUXTests(unittest.TestCase):
         from qgis.core import QgsGeometry,QgsRectangle
         box=lambda x,w:QgsGeometry.fromRect(QgsRectangle(x,0,x+w,10))
         idx,records=indexed([(box(0,5),{'a':True,'b':True,'c':'I'}),(box(5,5),{'a':True,'b':None,'c':'OUTSIDE'})])
-        result=join_evidence(box(0,10),idx,records,{'all':'a','partial':'b','protection_zone':'c'})
+        result=join_evidence(box(0,10),idx,records,{'all':'a','partial':'b','protection_zone':'c'},zone_priority=['I','II'])
         self.assertEqual(result,{'all':True,'partial':None,'protection_zone':'I'})
 
     def test_spatial_lookup_matches_brute_force_for_nonconvex_shapes(self):
@@ -145,6 +145,7 @@ class WorkflowUXTests(unittest.TestCase):
         from qgis.core import QgsProject,QgsRasterLayer,QgsVectorLayer
         from stage1.gui import StageOneDialog
         dialog=StageOneDialog();dialog.folder.setText(str(self.root/'gui_workspace'))
+        dialog.area.setText('Test study area');dialog.scenario.setText('TEST_EVENT');dialog.units.setCurrentIndex(dialog.units.findData('cm'))
         raster=QgsRasterLayer(str(self.source.parent/'inputs/flood_cm.tif'),'test flood')
         boundary=QgsVectorLayer(str(self.source.parent/'inputs/synthetic.gpkg')+'|layername=study_area','boundary','ogr')
         for layer in (raster,boundary):QgsProject.instance().addMapLayer(layer)

@@ -24,6 +24,7 @@ from .gis import (PALETTE, add_attribute_table, attach_evidence, checksum, csv_w
                   styled_layer, summary, write_layer)
 from .muriel import polygon_parts, union
 from .planning import FAMILIES, delivery_action, opportunity
+from .profiles import profile_snapshot, source_registry
 
 
 def mapped_features(spec, crs, target, control):
@@ -75,7 +76,7 @@ def action_areas(units, aoi, threshold_m, control=None):
 
 def run_planning(config_path, export_maps, control, out):
     config = resolve_config(config_path)
-    crs = QgsCoordinateReferenceSystem(config.get('crs', 'EPSG:25832'))
+    crs = QgsCoordinateReferenceSystem(config['crs'])
     if not crs.isValid() or crs.isGeographic() or crs.mapUnits() != Qgis.DistanceUnit.Meters:
         raise ValueError('Use a projected processing CRS in metres.')
     control.phase(3, 'Reading flood depths and boundary')
@@ -191,11 +192,11 @@ def run_planning(config_path, export_maps, control, out):
             hashes[spec['path']] = checksum(spec['path'])
         provenance.append(dict(role=role, path=spec['path'], layer=spec.get('layer'), sha256=hashes[spec['path']], metadata=json.dumps(spec.get('metadata', {}), ensure_ascii=False)))
     with sqlite3.connect(gpkg) as db:
-        for name, rows in [('decision_audit', audit), ('source_registry', [dict(source_id=k, **v) for k,v in SOURCES.items()]), ('input_provenance', provenance)]:
+        for name, rows in [('decision_audit', audit), ('source_registry', [dict(source_id=k, **v) for k,v in source_registry(config).items()]), ('input_provenance', provenance)]:
             add_attribute_table(db, name, rows)
     db.close()
     csv_write(out/'decision_audit.csv', audit)
-    csv_write(out/'source_registry.csv', [dict(source_id=k, **v) for k,v in SOURCES.items()])
+    csv_write(out/'source_registry.csv', [dict(source_id=k, **v) for k,v in source_registry(config).items()])
     csv_write(out/'planning_options.csv', [a for a,_ in concepts])
     csv_write(out/'planning_shortlist.csv', [a for a,_ in actions])
     csv_write(out/'action_membership.csv', [dict(unit_id=uid, action_id=aid) for uid, ids in membership.items() for aid in ids])
@@ -227,9 +228,11 @@ def run_planning(config_path, export_maps, control, out):
                                  'No hydraulic benefit, simultaneous flood volume, cooling, lifecycle cost or Pareto front is calculated.',
                                  'Heat is baseline context; ownership is a delivery category. Neither compensates for an unsafe pathway.',
                                  'The source grid is retained. The current 250,000-unit guard remains; partition larger analyses explicitly.',
-                                 'Other NRW municipalities must replace and review the Köln rule profile.'])
+                                 'Each governing jurisdiction needs its own registered applicable rules; generic unconfigured rules remain conditional.'])
     if config.get('demo'):
-        manifest['limitations'].insert(0, 'SYNTHETIC DEMONSTRATION: not findings for Köln-Kalk.')
+        manifest['limitations'].insert(0, 'SYNTHETIC DEMONSTRATION: not findings for an actual study area.')
+    manifest['decision_context'] = profile_snapshot(config)
+    (out/'rule_profile.json').write_text(json.dumps(profile_snapshot(config), indent=2, ensure_ascii=False))
     (out/'run_manifest.json').write_text(json.dumps(manifest, indent=2, ensure_ascii=False))
     (out/'resolved_config.json').write_text(json.dumps(config, indent=2, ensure_ascii=False))
     (out/'planning_summary.json').write_text(json.dumps(stats, indent=2))
@@ -239,7 +242,7 @@ def run_planning(config_path, export_maps, control, out):
         maps.append(('planning_action_areas', '02 · Flood action areas', 'action_class', None,
                      'Connected flood-need areas for\nplanning discussion. A001 etc.\nfollow depth, then area order.\n\nRead ownership shares, heat\noverlap and next action on click.\nThese are not design modules.\nNo flood benefit is estimated.'))
     maps += [('groundwater_screen', '03 · Infiltration evidence and restrictions', 'status', None,
-              'Known prohibitions block infiltration.\nMissing evidence stays conditional.\n\nLined detention and controlled\noutlets remain separate concepts.\nFinal clearance needs module design.\nThesis §§5.4.2, 5.5.2; Köln (2022).'),
+              'Known prohibitions block infiltration.\nMissing evidence stays conditional.\n\nLined detention and controlled\noutlets remain separate concepts.\nFinal clearance needs module design.\nThesis §§5.4.2, 5.5.2; local profile.'),
              ('ownership', '04 · Public and private delivery routes', 'status', None,
               'Exact polygon area shares.\nPrivate land is a partnership route.\nUnknown ownership is retained.\n\nPublic use is not proof of ownership.\nClick a unit for the next action.\nThesis §§5.4.1, 5.5.4.')]
     if heat:
@@ -253,7 +256,7 @@ def run_planning(config_path, export_maps, control, out):
         for table, title in [('muriel_source_mask', 'depth mask'), ('muriel_hotspots', 'hotspots'), ('muriel_priority', 'protect / investigate / adapt'), ('muriel_destinations', 'usable destinations'), ('muriel_connections', 'routing evidence')]:
             if any(name == table for name,_ in layers):
                 maps.append((table, 'MURIEL · '+title, fields[table], None,
-                             'Registered local Porz/Eil criteria.\nRead exact thresholds and decisions\nin the MURIEL registers.\n\nProximity is not a hydraulic route.\nNo infiltration clearance.\nSchwerdorf (2022), slides 19–20;\nthesis §§4.4.2, 5.5.3.'))
+                             'Project screening criteria.\nRead actual values and adoption\nin the MURIEL / profile registers.\n\nProximity is not a hydraulic route.\nNo infiltration clearance.\nMethod origin: Schwerdorf (2022),\nslides 19–20; thesis §5.5.3.'))
     control.phase(72, 'Building planning maps and project')
     exported = publish_maps(out, gpkg, crs, aoi, config, maps, export_maps, control)
     from .planning_report import create_planning_report

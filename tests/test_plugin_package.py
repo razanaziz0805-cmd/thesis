@@ -48,8 +48,8 @@ class PluginPackageTests(unittest.TestCase):
                 self.assertTrue((tmp/'bundled-demo/results/stage1.qgz').exists())
                 self.assertTrue(plugin.dialog.report_button.isEnabled())
                 self.assertIsNotNone(QgsProject.instance().mapLayer(sid))
-                from nbs_stage1.stage1.demo import create_planning_demo
-                planning_source=create_planning_demo(tmp/'bundled-planning')
+                from nbs_stage1.stage1.demo import create_area_demo
+                planning_source=create_area_demo(tmp/'bundled-planning',crs='EPSG:32734')
                 plugin.dialog.use_configuration(planning_source)
                 self.assertEqual(plugin.dialog.mode.currentData(),'planning')
                 plugin.dialog.start_run();app.processEvents()

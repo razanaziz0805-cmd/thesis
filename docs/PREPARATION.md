@@ -1,10 +1,10 @@
-# Automatic GIS preparation (v0.4)
+# Automatic GIS preparation (v0.6)
 
 The preparation stage creates new files. It never edits uploaded sources, guesses an unknown CRS, converts land use into ownership, or interprets soil/profile heights as groundwater.
 
 ## Desktop QGIS
 
-Open the Stage 1 panel and select **Prepare GIS data…**. Choose a study boundary, target CRS (normally EPSG:25832), workspace and input files. For raster inputs select a master raster. A cell size of zero preserves its native grid; choose a positive size only for a documented target grid. Set raster kinds to continuous, categorical or flood depth, and choose a compatible resampling method. Optional source CRS overrides require an evidence reference. A bare boundary may be accepted as geometry only after its CRS is confirmed. Other shapefiles normally need their attributes.
+Open the Stage 1 panel and select **Prepare GIS data…**. Choose a study boundary, a target projected CRS in metres appropriate to the area, workspace and input files. For raster inputs select a master raster. A cell size of zero preserves its native grid; choose a positive size only for a documented target grid. Set raster kinds to continuous, categorical or flood depth, and choose a compatible resampling method. Optional source CRS overrides require an evidence reference. A bare boundary may be accepted as geometry only after its CRS is confirmed. Other shapefiles normally need their attributes.
 
 For a multi-layer GeoPackage, enter the exact layer name in the input table. Add each required layer separately. The table scrolls horizontally to show per-dataset CRS, references and repair options.
 
@@ -21,6 +21,9 @@ In the normal **Inputs** form, **Automatically reproject, clip and align inputs 
 
 ## CRS handling
 
+There is no hardcoded target CRS. The preparation form can use a suitable declared master/boundary CRS when the target field is blank; JSON jobs must explicitly register `target_crs`. Unknown or geographic/foot-based defaults are not substituted for a local metre-based projection.
+
+
 A known CRS is transformed to the target CRS. A missing CRS needs `source_crs` plus `crs_evidence_ref`. A demonstrably wrong declared CRS can be replaced using the same documented override; this assigns the correct interpretation before reprojection. The manifest distinguishes assignment, replacement and transformation. Geographic coordinate ranges and spatial coverage are checked. Ballpark coordinate transformations are disabled.
 
 CRS labels, coordinate ranges and overlap do not establish survey accuracy. Small offsets, historical transformations and wrong-but-plausible coordinates need authoritative reference/control data. Z values and vertical datums are not certified or automatically converted.
@@ -35,7 +38,7 @@ Categorical inputs permit nearest-neighbour or mode. Continuous inputs permit ne
 
 Raster scale/offset encodings need a documented physical-unit conversion before screening. Conflicting declared/configured flood units are rejected during preparation. Int64/UInt64 rasters require a separately verified lossless strategy. Other common raster types are exported to Float64, preserving Float32 and <=32-bit integer values and allowing NaN NoData. Outside/unknown values never become zero or a passing category. Boundary-intersecting source cells are retained using an all-touched mask, then clipped as analysis polygons.
 
-Vector inventories normally retain a **100 m search extension**, increased automatically if MURIEL's destination radius is larger. Inventory completeness flags are preserved, not invented. Distance inventories remain uncut in integrated preparation so a nearest asset beyond the buffer is not silently lost. Native raster preparation retains the provider's actual coverage; it does not invent source coverage outside it.
+Vector inventories normally retain a **100 m search extension**, increased automatically to cover the largest configured MURIEL receptor, municipal-land or destination distance. Inventory completeness flags are preserved, not invented. Distance inventories remain uncut in integrated preparation so a nearest asset beyond the buffer is not silently lost. Native raster preparation retains the provider's actual coverage; it does not invent source coverage outside it.
 
 ## Incomplete inputs
 

@@ -93,7 +93,6 @@ class PlanningDialog(StageOneDialog):
         # The detailed form remains independent; hidden advanced declarations
         # must not silently enter the shorter planning setup.
         config.update(evidence=[], raster_evidence=[], distance_evidence=[], derived_module_bases=[], combinations=[], ownership=None)
-        config['policy'].update(profile_reviewed=False, profile_review_ref=None)
         config['groundwater_scenario_id'] = 'UNKNOWN_DESIGN_GROUNDWATER'
         config['vertical_datum'] = None
         config['muriel'] = {'enabled':False}
